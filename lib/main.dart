@@ -11,8 +11,10 @@ import 'package:depi_final_project/presentation/screens/Shop/women_categories/ac
 import 'package:depi_final_project/presentation/screens/Shop/women_categories/clothes_women.dart';
 import 'package:depi_final_project/presentation/screens/Shop/women_categories/new_women.dart';
 import 'package:depi_final_project/presentation/screens/Shop/women_categories/shoes_women.dart';
+import 'package:depi_final_project/presentation/screens/onboarding/onboardingscreen.dart';
 import 'package:depi_final_project/presentation/screens/register/signIn.dart';
 import 'package:depi_final_project/presentation/screens/register/signUp.dart';
+import 'package:depi_final_project/presentation/screens/splashscreen/splashscreen.dart';
 import 'package:depi_final_project/presentation/widgets/productdetails.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -33,7 +35,7 @@ class MyApp extends StatelessWidget {
         builder: (_, child) {
           return MaterialApp(
               debugShowCheckedModeBanner: false,
-              home: SigninScreen(),
+              home: SplashScreen(),
               routes: {
                 'signIn': (context) => SigninScreen(),
                 'signUp': (context) => SignupScreen(),
@@ -51,6 +53,7 @@ class MyApp extends StatelessWidget {
                 'shoes_kids': (context) => KidsShoes(),
                 'accesories_kids': (context) => KidsAccesories(),
                 'details_screen': (context) => ProductDetailsPage(),
+                'onBoarding': (context) => Onboardingscreen(),
 
               });
         });
