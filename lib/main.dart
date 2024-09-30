@@ -1,3 +1,5 @@
+import 'package:depi_final_project/presentation/Profile/Profile_Page.dart';
+import 'package:depi_final_project/presentation/Review/RatingReviewsScreen.dart';
 import 'package:depi_final_project/presentation/screens/Homepage/homePage.dart';
 import 'package:depi_final_project/presentation/screens/Shop/kids_categories.dart/kids_accesories.dart';
 import 'package:depi_final_project/presentation/screens/Shop/kids_categories.dart/kids_clothes.dart';
@@ -57,6 +59,8 @@ class MyApp extends StatelessWidget {
                 'accesories_kids': (context) => KidsAccesories(),
                 'details_screen': (context) => ProductDetailsPage(),
                 'onBoarding': (context) => Onboardingscreen(),
+                'rating_reviews':(context)=>RatingAndReviewPage(),
+                'profilePage':(context)=>ProfilePage(),
               });
         });
   }
