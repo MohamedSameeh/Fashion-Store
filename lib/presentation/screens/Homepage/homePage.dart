@@ -3,7 +3,7 @@ import 'package:depi_final_project/presentation/screens/favorites/favoritesScree
 import 'package:depi_final_project/presentation/screens/profile/profileScreen.dart';
 import 'package:depi_final_project/presentation/widgets/HomepageScreen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:stylish_bottom_bar/stylish_bottom_bar.dart'; // Import the stylish bottom bar package
 
 class Homepage extends StatefulWidget {
   const Homepage({super.key});
@@ -19,34 +19,58 @@ class _HomepageState extends State<Homepage> {
     Favoritesscreen(),
     Profilescreen(),
   ];
+
   int _currentIndex = 0;
+  
   @override
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        bottomNavigationBar: BottomNavigationBar(
+        bottomNavigationBar: StylishBottomBar(
+          currentIndex: _currentIndex, 
           onTap: (index) {
-            // Update the index when a tab is clicked
             setState(() {
-              _currentIndex = index;
-              
+              _currentIndex = index;  
             });
-            return ;
           },
-          currentIndex: _currentIndex, // Set the selected tab
-          backgroundColor: Colors.blue,
-          selectedItemColor: Colors.black, // Color for the selected icon
-          unselectedItemColor: Colors.grey, // Color for unselected icons
+          option: BubbleBarOptions( 
+            barStyle: BubbleBarStyle.horizontal, 
+            bubbleFillStyle: BubbleFillStyle.fill, 
+            iconSize: 30,
+            opacity: 0.3, 
+          ),
           items: [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.shopping_cart), label: 'Shop'),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.favorite), label: 'Favorites'),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+            BottomBarItem(
+              icon: const Icon(Icons.home), 
+              title: const Text('Home'), 
+              selectedColor: Colors.white, 
+              unSelectedColor: Colors.black, 
+              backgroundColor: Colors.black, 
+            ),
+            BottomBarItem(
+              icon: const Icon(Icons.shopping_cart), 
+              title: const Text('Shop'), 
+              selectedColor: Colors.white,
+              unSelectedColor: Colors.black,
+              backgroundColor: Colors.black,
+            ),
+            BottomBarItem(
+              icon: const Icon(Icons.favorite), 
+              title: const Text('Favorites'), 
+              selectedColor: Colors.white,
+              unSelectedColor: Colors.black,
+              backgroundColor: Colors.black,
+            ),
+            BottomBarItem(
+              icon: const Icon(Icons.person), 
+              title: const Text('Profile'), 
+              selectedColor: Colors.white,
+              unSelectedColor: Colors.black,
+              backgroundColor: Colors.black,
+            ),
           ],
         ),
-        body: Screens[_currentIndex],
+        body: Screens[_currentIndex],  
       ),
     );
   }

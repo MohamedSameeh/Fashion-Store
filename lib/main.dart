@@ -16,11 +16,14 @@ import 'package:depi_final_project/presentation/screens/register/signIn.dart';
 import 'package:depi_final_project/presentation/screens/register/signUp.dart';
 import 'package:depi_final_project/presentation/screens/splashscreen/splashscreen.dart';
 import 'package:depi_final_project/presentation/widgets/productdetails.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(MyApp());
 }
 
 class MyApp extends StatelessWidget {

@@ -1,6 +1,9 @@
+import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-
+import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -101,7 +104,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     borderRadius: BorderRadius.circular(50),
                     color: Colors.redAccent),
                 child: MaterialButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    signInWithGoogle(context);
+                  },
                   child: Row(children: [
                     Image.asset(
                       'assets/images/google.png',
@@ -172,5 +177,99 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
       ),
     );
+  }
+}
+
+Future<UserCredential?> signInWithGoogle(BuildContext context) async {
+  try {
+    final GoogleSignIn googleSignIn = GoogleSignIn(
+      scopes: <String>[
+        'email',
+      ],
+    );
+
+    // Ensure user is logged out before showing the sign-in screen
+    await googleSignIn.signOut();
+
+    // Prompt user to select an account
+    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+
+    if (googleUser == null) {
+      // The user canceled the sign-in
+      return null;
+    }
+
+    final GoogleSignInAuthentication googleAuth =
+        await googleUser.authentication;
+
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+
+    final userCredential =
+        await FirebaseAuth.instance.signInWithCredential(credential);
+
+    // Navigate to the homepage after successful sign-in
+    Navigator.of(context).pushNamed('homepage');
+
+    return userCredential;
+  } on FirebaseAuthException catch (e) {
+    print('Error during Google sign-in: $e');
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.error,
+      animType: AnimType.rightSlide,
+      title: 'Google Sign-In Failed',
+      desc: 'Please try again.',
+    ).show();
+    return null;
+  }
+}
+
+Future<UserCredential?> signInWithFacebook(BuildContext context) async {
+  try {
+    // Trigger the sign-in flow
+    final LoginResult loginResult = await FacebookAuth.instance.login();
+
+    // Check if the login was successful
+    if (loginResult.status == LoginStatus.success) {
+      // Create a credential from the access token
+      final OAuthCredential facebookAuthCredential = FacebookAuthProvider.credential(
+        loginResult.accessToken!.tokenString, // Change this to loginResult.accessToken!.value if needed
+      );
+
+      // Once signed in, return the UserCredential
+      final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
+      
+      // Navigate to the homepage after successful sign-in
+      Navigator.of(context).pushReplacementNamed('homepage');
+
+      return userCredential;
+    } else {
+      // Handle error for unsuccessful login
+      String message;
+      if (loginResult.status == LoginStatus.cancelled) {
+        message = 'Login cancelled';
+      } else {
+        message = 'Login failed: ${loginResult.message}';
+      }
+      throw Exception(message);
+    }
+  } on FirebaseAuthException catch (e) {
+    // Handle Firebase authentication error
+    print('FirebaseAuthException: $e');
+    return null;
+  } catch (e) {
+    // Handle any other errors
+    print('Error during Facebook sign-in: $e');
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.error,
+      animType: AnimType.rightSlide,
+      title: 'Login Failed',
+      desc: e.toString(),
+    ).show();
+    return null;
   }
 }

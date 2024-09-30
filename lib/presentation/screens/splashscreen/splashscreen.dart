@@ -10,7 +10,6 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    // Start the timer for splash duration and navigate to onboarding screen
     Timer(Duration(seconds: 2), () {
       Navigator.pushReplacementNamed(context, 'onBoarding');
     });
@@ -23,9 +22,8 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Display your logo or splash image
             Image.asset(
-              'assets/images/splashscreenlogo.png', // Your splash logo image
+              'assets/images/splashscreenlogo.png', 
               width: 450,
               height: 450,
             ),
