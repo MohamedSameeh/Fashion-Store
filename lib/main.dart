@@ -54,7 +54,6 @@ class MyApp extends StatelessWidget {
                 'accesories_kids': (context) => KidsAccesories(),
                 'details_screen': (context) => ProductDetailsPage(),
                 'onBoarding': (context) => Onboardingscreen(),
-
               });
         });
   }
