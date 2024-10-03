@@ -1,5 +1,5 @@
-import 'package:depi_final_project/presentation/Profile/Profile_Page.dart';
-import 'package:depi_final_project/presentation/Review/RatingReviewsScreen.dart';
+import 'package:depi_final_project/presentation/screens/Profile/Profile_Page.dart';
+import 'package:depi_final_project/presentation/screens/Review/RatingReviewsScreen.dart';
 import 'package:depi_final_project/presentation/screens/Homepage/homePage.dart';
 import 'package:depi_final_project/presentation/screens/Shop/kids_categories.dart/kids_accesories.dart';
 import 'package:depi_final_project/presentation/screens/Shop/kids_categories.dart/kids_clothes.dart';
@@ -14,9 +14,12 @@ import 'package:depi_final_project/presentation/screens/Shop/women_categories/cl
 import 'package:depi_final_project/presentation/screens/Shop/women_categories/new_women.dart';
 import 'package:depi_final_project/presentation/screens/Shop/women_categories/shoes_women.dart';
 import 'package:depi_final_project/presentation/screens/onboarding/onboardingscreen.dart';
+import 'package:depi_final_project/presentation/screens/register/forgotPassword.dart';
 import 'package:depi_final_project/presentation/screens/register/signIn.dart';
 import 'package:depi_final_project/presentation/screens/register/signUp.dart';
 import 'package:depi_final_project/presentation/screens/splashscreen/splashscreen.dart';
+import 'package:depi_final_project/presentation/view_all_pages/new_view_all_page.dart';
+import 'package:depi_final_project/presentation/view_all_pages/sales_view_all_page.dart';
 import 'package:depi_final_project/presentation/widgets/productdetails.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -61,6 +64,9 @@ class MyApp extends StatelessWidget {
                 'onBoarding': (context) => Onboardingscreen(),
                 'rating_reviews':(context)=>RatingAndReviewPage(),
                 'profilePage':(context)=>ProfilePage(),
+                'sales_view_all':(context)=>SalesViewAllPage(),
+                'new_view_all':(context)=>NewViewAllPage(),
+                'forgot_password':(context)=>ForgotpasswordScreen(),
               });
         });
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:depi_final_project/presentation/widgets/homepage_new_sale.dart';
 import 'package:flutter/material.dart';
 
@@ -9,111 +11,145 @@ class Homepagescreen extends StatefulWidget {
 }
 
 class _HomepagescreenState extends State<Homepagescreen> {
+  List<String> images = [
+    'assets/images/10.jpg',
+    'assets/images/11.jpg',
+    'assets/images/12.jpg',
+    'assets/images/13.jpg',
+    'assets/images/4.jpg',
+    'assets/images/5.jpg',
+  ];
+
+late PageController _pageController;
+  late Timer _timer;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _currentPage);
+
+    // Set a Timer to automatically scroll every 3 seconds
+    _timer = Timer.periodic(Duration(seconds: 3), (Timer timer) {
+      if (_currentPage < images.length - 1) {
+        _currentPage++;
+      } else {
+        _currentPage = 0; // Loop back to the first image
+      }
+
+      _pageController.animateToPage(
+        _currentPage,
+        duration: Duration(milliseconds: 500),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel(); // Cancel the timer when the widget is disposed
+    _pageController.dispose();
+    super.dispose();
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: ListView(children: [
-            Stack(children: [
-              Image.asset(
-                'assets/images/7.webp',
-                height: 350,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
+      body: ListView(
+        children: [
+          Container(
+            width: double.infinity,
+            height: 300,
+            child: PageView.builder(
+              controller: _pageController,
+              itemCount: images.length,
+              itemBuilder: (context, index) {
+                return Image.asset(
+                  images[index],
+                  fit: BoxFit.cover,
+                );
+              },
+            ),
+          ),
+          Row(
+            children: [
               Container(
-                margin: EdgeInsets.only(top: 130, left: 10),
-                child: Text('Fashion\n Sale',
-                    style: TextStyle(
-                        fontSize: 50,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white)),
+                margin: EdgeInsets.only(left: 20, top: 20),
+                child: Text(
+                  'Sale',
+                  style: TextStyle(
+                    fontSize: 40,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
-              Container(
-                width: 200,
-                height: 50,
-                margin: EdgeInsets.only(top: 280, left: 10),
-                decoration: BoxDecoration(
-                    color: Colors.red, borderRadius: BorderRadius.circular(30)),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).pushNamed('homepage');
+              Padding(
+                padding: const EdgeInsets.only(left: 170),
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('sales_view_all');
                   },
-                  child: Center(
-                      child: Text(
-                    'Check',
-                    style: TextStyle(
-                        fontSize: 30,
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold),
-                  )),
+                  child: Text(
+                    'View all',
+                    style: TextStyle(color: Colors.black, fontSize: 15),
+                  ),
                 ),
               )
-            ]),
-            Row(
-              children: [
-                Container(
-                    margin: EdgeInsets.only(left: 20, top: 20),
-                    child: Text(
-                      'Sale',
-                      style: TextStyle(
-                          fontSize: 40,
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold),
-                    )),
-                Padding(
-                  padding: const EdgeInsets.only(left: 170),
-                  child: TextButton(
-                      onPressed: () {},
-                      child: Text(
-                        'View all',
-                        style: TextStyle(color: Colors.black, fontSize: 15),
-                      )),
-                )
-              ],
+            ],
+          ),
+          Container(
+            margin: EdgeInsets.only(left: 20),
+            child: Text(
+              "Super summer sale",
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey,
+                fontWeight: FontWeight.normal,
+              ),
             ),
-            Container(
+          ),
+          HomepageNewSale(type: 'Sale'),
+          Row(
+            children: [
+              Container(
                 margin: EdgeInsets.only(left: 20),
                 child: Text(
-                  "Super summer sale",
+                  'New',
                   style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.normal),
-                )),
-            HomepageNewSale(type: 'Sale'),
-            Row(
-              children: [
-                Container(
-                    margin: EdgeInsets.only(left: 20),
-                    child: Text(
-                      'New',
-                      style: TextStyle(
-                          fontSize: 40,
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold),
-                    )),
-                Padding(
-                  padding: const EdgeInsets.only(left: 170),
-                  child: TextButton(
-                      onPressed: () {},
-                      child: Text(
-                        'View all',
-                        style: TextStyle(color: Colors.black, fontSize: 15),
-                      )),
-                )
-              ],
+                    fontSize: 40,
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 170),
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('new_view_all');
+                  },
+                  child: Text(
+                    'View all',
+                    style: TextStyle(color: Colors.black, fontSize: 15),
+                  ),
+                ),
+              )
+            ],
+          ),
+          Container(
+            margin: EdgeInsets.only(left: 20),
+            child: Text(
+              "You've never seen it before",
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey,
+                fontWeight: FontWeight.normal,
+              ),
             ),
-            Container(
-                margin: EdgeInsets.only(left: 20),
-                child: Text(
-                  "You've never seen it before",
-                  style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.normal),
-                )),
-            HomepageNewSale(type: "New")
-          ]),
+          ),
+          HomepageNewSale(type: "New"),
+        ],
+      ),
     );
   }
 }

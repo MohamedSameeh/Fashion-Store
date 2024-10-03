@@ -1,3 +1,4 @@
+import 'package:depi_final_project/presentation/widgets/categoriesDetails.dart';
 import 'package:flutter/material.dart';
 
 class KidsAccesories extends StatefulWidget {
@@ -11,13 +12,7 @@ class _KidsAccesoriesState extends State<KidsAccesories> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        child: Column(
-          children: [
-            Center(child: Text('kids accesories'),)
-          ],
-        ),
-      ),
+      body: CategoriesDetails(type: "Kids Accessories ",)
     );
   }
 }

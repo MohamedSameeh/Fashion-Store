@@ -31,7 +31,7 @@ class _HomepageNewSaleState extends State<HomepageNewSale> {
               children: [
                 GestureDetector(
                   onTap: () {
-                    Navigator.of(context).pushNamed('homepage');
+                    Navigator.of(context).pushNamed('details_screen');
                   },
                   child: Container(
                     margin: EdgeInsets.all(10),

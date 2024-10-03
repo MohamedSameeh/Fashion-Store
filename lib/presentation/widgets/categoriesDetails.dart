@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 
-class WomensNewproductsPage extends StatefulWidget {
-  WomensNewproductsPage({super.key});
-
+class CategoriesDetails extends StatefulWidget {
+  CategoriesDetails({super.key, required this.type});
+  final String type;
   @override
-  State<WomensNewproductsPage> createState() => _HomepageNewSaleState();
+  State<CategoriesDetails> createState() => _HomepageNewSaleState();
 }
 
-class _HomepageNewSaleState extends State<WomensNewproductsPage> {
+class _HomepageNewSaleState extends State<CategoriesDetails> {
+  
   List<String> images = [
     'assets/images/10.jpg',
     'assets/images/11.jpg',
@@ -21,16 +22,16 @@ class _HomepageNewSaleState extends State<WomensNewproductsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('New Products'),
+        title: Text(widget.type),
       ),
       body: GridView.builder(
         padding: EdgeInsets.all(10),
         itemCount: images.length,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2, // Number of items per row
-          childAspectRatio: 0.5, // Adjust aspect ratio for height and width balance
-          crossAxisSpacing: 10, // Spacing between items horizontally
-          mainAxisSpacing: 10, // Spacing between items vertically
+          crossAxisCount: 2,
+          childAspectRatio: 0.5,
+          crossAxisSpacing: 10,
+          mainAxisSpacing: 10,
         ),
         itemBuilder: (context, index) {
           return Container(
@@ -62,7 +63,7 @@ class _HomepageNewSaleState extends State<WomensNewproductsPage> {
                           '${images[index]}',
                           fit: BoxFit.cover,
                           width: double.infinity,
-                          height: 200, // Fixed height for uniformity
+                          height: 200,
                         ),
                       ),
                       Positioned(
@@ -108,7 +109,7 @@ class _HomepageNewSaleState extends State<WomensNewproductsPage> {
                 Padding(
                   padding: const EdgeInsets.only(left: 10, top: 5),
                   child: Text(
-                    '\$99.99', // Placeholder for price
+                    '\$99.99',
                     style: TextStyle(color: Colors.redAccent, fontSize: 16),
                   ),
                 ),

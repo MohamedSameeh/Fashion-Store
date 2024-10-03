@@ -23,12 +23,21 @@ class _SigninScreenState extends State<SigninScreen> {
               height: 150.h,
             ),
             Container(
-                margin: EdgeInsets.all(20),
+                margin: EdgeInsets.only(left: 20, top: 20, right: 20),
                 child: Text(
                   'Login',
                   style: TextStyle(
                       fontSize: 35.sp,
                       color: Colors.black,
+                      fontWeight: FontWeight.bold),
+                )),
+            Container(
+                margin: EdgeInsets.only(left: 20, top: 10),
+                child: Text(
+                  'Login To Continue Using The App',
+                  style: TextStyle(
+                      fontSize: 15.sp,
+                      color: Colors.grey,
                       fontWeight: FontWeight.bold),
                 )),
             SizedBox(
@@ -59,13 +68,23 @@ class _SigninScreenState extends State<SigninScreen> {
                 ),
               ),
             ),
+            Padding(
+              padding: const EdgeInsets.only(left: 230,top: 10),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.of(context).pushNamed('forgot_password');
+                },
+                child: Text('forgot password?',style: TextStyle(fontSize: 15,color: Colors.black,fontWeight: FontWeight.bold),),
+              ),
+            ),
             Container(
-              width: 330,
-              margin: EdgeInsets.only(left: 10, right: 10, top: 40),
+              width: 100.w,
+              margin: EdgeInsets.only(left: 60, right: 60, top: 20),
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(50),
                   color: Color.fromARGB(255, 120, 82, 255)),
               child: MaterialButton(
+                minWidth: 100.w,
                 onPressed: () {
                   Navigator.of(context).pushNamed('homepage');
                 },
@@ -86,70 +105,58 @@ class _SigninScreenState extends State<SigninScreen> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ))),
             Container(
-                width: 300,
-                margin: EdgeInsets.only(left: 10, right: 10),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(50),
-                    color: Colors.redAccent),
-                child: MaterialButton(
-                  onPressed: () {
-                    signInWithGoogle(context);
-                  },
-                  child: Row(children: [
-                    Image.asset(
+              margin: EdgeInsets.only(right: 10, top: 20,left: 50),
+              child: Row(children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  margin: EdgeInsets.only(right: 20,),
+                  decoration: BoxDecoration(color: Colors.indigo[50],borderRadius: BorderRadius.circular(50)),
+                  child: MaterialButton(
+                    onPressed: () {
+                      signInWithFacebook(context);
+                    },
+                    child: Image.asset(
+                      'assets/images/fb1.png',
+                      width: 160.w,
+                      height: 150.h,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 100,
+                  height: 100,
+                  margin: EdgeInsets.only(left: 40),
+                  decoration: BoxDecoration(color: Colors.indigo[50],borderRadius: BorderRadius.circular(50)),
+                  child: MaterialButton(
+                    onPressed: () {
+                      signInWithGoogle(context);
+                    },
+                    child: Image.asset(
                       'assets/images/google.png',
-                      width: 50.w,
-                      height: 80.h,
-                    ),
-                    Text(
-                      'Login with Google',
-                      style: TextStyle(
-                          fontSize: 25.sp,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ]),
-                )),
-            SizedBox(
-              height: 10,
-            ),
-            Container(
-              width: 330,
-              margin: EdgeInsets.only(left: 10, right: 10),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(50), color: Colors.blue),
-              child: MaterialButton(
-                onPressed: () async{
-                await signInWithFacebook(context);
-                },
-                child: Row(children: [
-                  Image.asset(
-                    'assets/images/fb1.png',
-                    width: 50.w,
-                    height: 80.h,
-                  ),
-                  Text(
-                    'Login with Facebook',
-                    style: TextStyle(
-                      fontSize: 25.sp,
-                      color: Colors.white,
+                      width: 125.w,
+                      height: 150.h,
                     ),
                   ),
-                ]),
-              ),
+                ),
+              ]),
             ),
-            Container(
-                margin: EdgeInsets.only(top: 80, bottom: 15),
-                child: Center(
-                    child: Text(
-                  'Dont have an account?',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                ))),
-            Container(
-              width: 330,
-              margin: EdgeInsets.only(left: 10, right: 10),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(50), color: Colors.green),
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 40),
+                  child: Container(
+                      margin: EdgeInsets.only(top: 50, bottom: 15),
+                      child: Center(
+                          child: Text(
+                        'Dont have an account?',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ))),
+                ),
+                    Container(
+              
+              margin: EdgeInsets.only(top: 34),
+              
               child: MaterialButton(
                 onPressed: () {
                   Navigator.of(context).pushNamed('signUp');
@@ -157,12 +164,15 @@ class _SigninScreenState extends State<SigninScreen> {
                 child: Text(
                   'Sign up',
                   style: TextStyle(
-                    fontSize: 30.sp,
-                    color: Colors.white,
+                    fontSize: 20.sp,
+                    color: Color.fromARGB(255, 120, 82, 255),
                   ),
                 ),
               ),
             ),
+              ],
+            ),
+            
           ],
         ),
       ),
@@ -216,6 +226,7 @@ Future<UserCredential?> signInWithGoogle(BuildContext context) async {
     return null;
   }
 }
+
 Future<UserCredential> signInWithFacebook(BuildContext context) async {
   // Trigger the sign-in flow
   final LoginResult loginResult = await FacebookAuth.instance.login();

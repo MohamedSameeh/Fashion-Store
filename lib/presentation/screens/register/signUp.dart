@@ -73,7 +73,7 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             Container(
               width: 330,
-              margin: EdgeInsets.only(left: 10, right: 10, top: 30),
+              margin: EdgeInsets.only(left: 60, right: 60, top: 30),
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(50),
                   color: Color.fromARGB(255, 120, 82, 255)),
@@ -97,81 +97,73 @@ class _SignupScreenState extends State<SignupScreen> {
                   'Or sign up With',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ))),
-            Container(
-                width: 300,
-                margin: EdgeInsets.only(left: 10, right: 10),
-                decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(50),
-                    color: Colors.redAccent),
-                child: MaterialButton(
-                  onPressed: () {
-                    signInWithGoogle(context);
-                  },
-                  child: Row(children: [
-                    Image.asset(
+              Container(
+              margin: EdgeInsets.only(right: 10, top: 20,left: 50),
+              child: Row(children: [
+                Container(
+                  width: 100,
+                  height: 100,
+                  margin: EdgeInsets.only(right: 20,),
+                  decoration: BoxDecoration(color: Colors.indigo[50],borderRadius: BorderRadius.circular(50)),
+                  child: MaterialButton(
+                    onPressed: () {
+                      signInWithFacebook(context);
+                    },
+                    child: Image.asset(
+                      'assets/images/fb1.png',
+                      width: 160.w,
+                      height: 150.h,
+                    ),
+                  ),
+                ),
+                Container(
+                  width: 100,
+                  height: 100,
+                  margin: EdgeInsets.only(left: 40),
+                  decoration: BoxDecoration(color: Colors.indigo[50],borderRadius: BorderRadius.circular(50)),
+                  child: MaterialButton(
+                    onPressed: () {
+                      signInWithGoogle(context);
+                    },
+                    child: Image.asset(
                       'assets/images/google.png',
-                      width: 50.w,
-                      height: 80.h,
-                    ),
-                    Text(
-                      'Sign up with Google',
-                      style: TextStyle(
-                          fontSize: 25.sp,
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold),
-                    ),
-                  ]),
-                )),
-            SizedBox(
-              height: 10,
-            ),
-            Container(
-              width: 330,
-              margin: EdgeInsets.only(left: 10, right: 10),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(50), color: Colors.blue),
-              child: MaterialButton(
-                onPressed: () {},
-                child: Row(children: [
-                  Image.asset(
-                    'assets/images/fb1.png',
-                    width: 50.w,
-                    height: 80.h,
-                  ),
-                  Text(
-                    'Sign up with Facebook',
-                    style: TextStyle(
-                      fontSize: 25.sp,
-                      color: Colors.white,
+                      width: 125.w,
+                      height: 150.h,
                     ),
                   ),
-                ]),
-              ),
+                ),
+              ]),
             ),
-            Container(
-                margin: EdgeInsets.only(top: 50, bottom: 15),
-                child: Center(
-                    child: Text(
-                  'Already have an account?',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                ))),
-            Container(
-              width: 330,
-              margin: EdgeInsets.only(left: 10, right: 10),
-              decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(50), color: Colors.green),
+              Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 40),
+                  child: Container(
+                      margin: EdgeInsets.only(top: 50, bottom: 15),
+                      child: Center(
+                          child: Text(
+                        'Already have an account?',
+                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ))),
+                ),
+                    Container(
+              
+              margin: EdgeInsets.only(top: 34),
+              
               child: MaterialButton(
                 onPressed: () {
                   Navigator.of(context).pushNamed('signIn');
                 },
                 child: Text(
-                  'Sign in',
+                  'Sign In',
                   style: TextStyle(
-                    fontSize: 30.sp,
-                    color: Colors.white,
+                    fontSize: 20.sp,
+                    color: Color.fromARGB(255, 120, 82, 255),
                   ),
                 ),
               ),
+            ),
+              ],
             ),
           ],
         ),

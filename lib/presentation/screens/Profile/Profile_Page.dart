@@ -20,16 +20,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        elevation: 0,
-        backgroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.search, color: Colors.black),
-            onPressed: () {},
-          ),
-        ],
-      ),
+      
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),

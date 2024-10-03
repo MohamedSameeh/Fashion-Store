@@ -35,9 +35,7 @@ class _RatingAndReviewPageState extends State<RatingAndReviewPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Rating & Reviews'),
-      ),
+    
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
