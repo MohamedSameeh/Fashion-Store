@@ -79,7 +79,7 @@ class _SigninScreenState extends State<SigninScreen> {
             ),
             Container(
               width: 100.w,
-              margin: EdgeInsets.only(left: 60, right: 60, top: 20),
+              margin: EdgeInsets.only(left: 85, right: 85, top: 15),
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(50),
                   color: Color.fromARGB(255, 120, 82, 255)),
@@ -105,11 +105,11 @@ class _SigninScreenState extends State<SigninScreen> {
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ))),
             Container(
-              margin: EdgeInsets.only(right: 10, top: 20,left: 50),
+              margin: EdgeInsets.only(right: 10, top: 20,left: 80),
               child: Row(children: [
                 Container(
-                  width: 100,
-                  height: 100,
+                  width: 80,
+                  height: 80,
                   margin: EdgeInsets.only(right: 20,),
                   decoration: BoxDecoration(color: Colors.indigo[50],borderRadius: BorderRadius.circular(50)),
                   child: MaterialButton(
@@ -124,8 +124,8 @@ class _SigninScreenState extends State<SigninScreen> {
                   ),
                 ),
                 Container(
-                  width: 100,
-                  height: 100,
+                  width: 80,
+                  height: 80,
                   margin: EdgeInsets.only(left: 40),
                   decoration: BoxDecoration(color: Colors.indigo[50],borderRadius: BorderRadius.circular(50)),
                   child: MaterialButton(

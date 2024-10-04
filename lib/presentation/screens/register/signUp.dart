@@ -73,7 +73,7 @@ class _SignupScreenState extends State<SignupScreen> {
             ),
             Container(
               width: 330,
-              margin: EdgeInsets.only(left: 60, right: 60, top: 30),
+              margin: EdgeInsets.only(left: 85, right: 85, top: 30),
               decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(50),
                   color: Color.fromARGB(255, 120, 82, 255)),
@@ -97,12 +97,12 @@ class _SignupScreenState extends State<SignupScreen> {
                   'Or sign up With',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ))),
-              Container(
-              margin: EdgeInsets.only(right: 10, top: 20,left: 50),
+                Container(
+              margin: EdgeInsets.only(right: 10, top: 20,left: 80),
               child: Row(children: [
                 Container(
-                  width: 100,
-                  height: 100,
+                  width: 80,
+                  height: 80,
                   margin: EdgeInsets.only(right: 20,),
                   decoration: BoxDecoration(color: Colors.indigo[50],borderRadius: BorderRadius.circular(50)),
                   child: MaterialButton(
@@ -117,8 +117,8 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                 ),
                 Container(
-                  width: 100,
-                  height: 100,
+                  width: 80,
+                  height: 80,
                   margin: EdgeInsets.only(left: 40),
                   decoration: BoxDecoration(color: Colors.indigo[50],borderRadius: BorderRadius.circular(50)),
                   child: MaterialButton(
