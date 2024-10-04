@@ -3,7 +3,6 @@ import 'package:depi_final_project/presentation/screens/Profile/Profile_Page.dar
 import 'package:depi_final_project/presentation/screens/Review/RatingReviewsScreen.dart';
 import 'package:depi_final_project/presentation/screens/Shop/shop_screen.dart';
 import 'package:depi_final_project/presentation/screens/favorites/favoritesScreen.dart';
-import 'package:depi_final_project/presentation/screens/profile/profileScreen.dart';
 import 'package:depi_final_project/presentation/widgets/HomepageScreen.dart';
 import 'package:flutter/material.dart';
 import 'package:stylish_bottom_bar/stylish_bottom_bar.dart'; // Import the stylish bottom bar package
@@ -20,7 +19,7 @@ class _HomepageState extends State<Homepage> {
     Homepagescreen(),
     ShopScreen(),
     BagPage(),
-    RatingAndReviewPage(),
+    FavoriteScreen(),
     ProfilePage(),
   ];
 

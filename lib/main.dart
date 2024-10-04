@@ -13,6 +13,7 @@ import 'package:depi_final_project/presentation/screens/Shop/women_categories/ac
 import 'package:depi_final_project/presentation/screens/Shop/women_categories/clothes_women.dart';
 import 'package:depi_final_project/presentation/screens/Shop/women_categories/new_women.dart';
 import 'package:depi_final_project/presentation/screens/Shop/women_categories/shoes_women.dart';
+import 'package:depi_final_project/presentation/screens/favorites/favoritesScreen.dart';
 import 'package:depi_final_project/presentation/screens/onboarding/onboardingscreen.dart';
 import 'package:depi_final_project/presentation/screens/register/forgotPassword.dart';
 import 'package:depi_final_project/presentation/screens/register/signIn.dart';
@@ -61,6 +62,7 @@ class MyApp extends StatelessWidget {
                 'shoes_kids': (context) => KidsShoes(),
                 'accesories_kids': (context) => KidsAccesories(),
                 'details_screen': (context) => ProductDetailsPage(),
+                'favorites_screen': (context) => FavoriteScreen(),
                 'onBoarding': (context) => Onboardingscreen(),
                 'rating_reviews':(context)=>RatingAndReviewPage(),
                 'profilePage':(context)=>ProfilePage(),

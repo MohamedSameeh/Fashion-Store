@@ -26,7 +26,7 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
                   child: Text(
                     "Forgot Password",
                     style: TextStyle(
-                        fontSize: 35,
+                        fontSize: 35.sp,
                         fontWeight: FontWeight.bold,
                         color: Colors.black),
                   )),
