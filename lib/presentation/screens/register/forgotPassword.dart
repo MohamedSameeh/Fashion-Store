@@ -1,3 +1,5 @@
+import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 
@@ -12,6 +14,21 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
   String address = "@gmail.com";
   TextEditingController gmailController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+  void _showErrorMessage(String message,String title){
+    if(!mounted)return; //this to check if the screen still exist or no
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.error,
+      animType: AnimType.rightSlide,
+      title: title,
+      desc: message,
+      btnCancelOnPress: () {},
+      btnOkOnPress: () {},
+    ).show();
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -36,7 +53,7 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
               Padding(
                 padding: const EdgeInsets.all(10),
                 child: Text(
-                  'Please, enter yout email address. You will recieve a link to create a new password via email.',
+                  'Please, enter your email address. You will receive a link to create a new password via email.',
                   style: TextStyle(color: Colors.black, fontSize: 15),
                 ),
               ),
@@ -75,11 +92,33 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
                       ),
                       child: MaterialButton(
                         minWidth: 100,
-                        onPressed: () {
+                        onPressed: () async {
                           if (_formKey.currentState!.validate()) {
-                            // If the form is valid, navigate to the specified route
-                            Navigator.of(context)
-                                .pushNamed(''); // Specify the correct route
+
+                            //to handel if user enter wrong email
+                            try{
+                              await FirebaseAuth.instance.sendPasswordResetEmail(email: gmailController.text);
+                              if(!mounted)return; //this to check if the screen still exist or no
+                              AwesomeDialog(
+                                context: context,
+                                dialogType: DialogType.success,
+                                animType: AnimType.rightSlide,
+                                title: 'info',
+                                desc: 'Please go to your email to reset Your Password',
+                                btnCancelOnPress: () {},
+                                btnOkOnPress: () async {
+                                  await Future.delayed(Duration(seconds: 2));
+                                  // If the form is valid, navigate to the specified route
+                                  Navigator.of(context)
+                                      .pushNamed('signIn'); // Specify the correct route
+                                },
+
+                              ).show();
+
+
+                            }catch(e){
+                              _showErrorMessage("Enter correct Email....", "Error!!");
+                            }
                           }
                         },
                         child: Text(

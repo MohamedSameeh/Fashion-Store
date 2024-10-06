@@ -13,6 +13,119 @@ class SigninScreen extends StatefulWidget {
 }
 
 class _SigninScreenState extends State<SigninScreen> {
+
+  var emailController=TextEditingController();
+  var passController=TextEditingController();
+  bool passwordVisible = false;
+  GlobalKey<FormState>formKey=GlobalKey<FormState>();
+
+  void _showErrorMessage(String message,String title){
+    if(!mounted)return; //this to check if the screen still exist or no
+    AwesomeDialog(
+      context: context,
+      dialogType: DialogType.error,
+      animType: AnimType.rightSlide,
+      title: title,
+      desc: message,
+      btnCancelOnPress: () {},
+      btnOkOnPress: () {},
+    ).show();
+
+  }
+  /*
+    Future return type:The function is asynchronous, indicated by the Future keyword. It will perform the sign-in operation asynchronously and return a Future object, which allows you to handle success or failure at a later time.
+    await keyword:The function waits for the sign-in process to complete before moving to the next line of code. This ensures that the operation is completed before the function proceeds (or returns an error if sign-in fails).
+     */
+  Future signIn() async{
+    try {
+      final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: emailController.text,
+          password: passController.text
+      );
+      if(credential.user!.emailVerified){
+        Navigator.pushReplacementNamed(context, 'homepage');
+      }else{
+        if(!mounted)return; //this to check if the screen still exist or no
+        AwesomeDialog(
+          context: context,
+          dialogType: DialogType.info,
+          animType: AnimType.rightSlide,
+          title: 'info',
+          desc: 'Please go to your email to verify your account',
+          btnCancelOnPress: () {},
+          btnOkOnPress: () {},
+        ).show();
+
+      }
+
+    } on FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        _showErrorMessage('No user found for that email.', 'Error!!!');
+
+      } else if (e.code == 'wrong-password') {
+        _showErrorMessage('Wrong password provided for that user.', 'Error!!!');
+
+      }
+    }
+  }
+
+  Future signInWithGoogle() async {
+    try {
+      // Trigger the authentication flow
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+
+      if (googleUser == null) { //if user not choose account and disable the dialog this condition not complete te body of function to not happen any error
+        return;
+      }
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication? googleAuth = await googleUser.authentication;
+
+      // Create a new credential
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth?.accessToken,
+        idToken: googleAuth?.idToken,
+      );
+
+      // Once signed in, return the UserCredential
+      await FirebaseAuth.instance.signInWithCredential(credential);
+      //go to homepage
+      Navigator.pushNamed(context, 'homepage');
+    }catch(e){
+      print('Error during Google Sign-In: $e');
+
+    }
+  }
+
+  Future signInWithFacebook() async {
+    try {
+      // Trigger the sign-in flow
+      final LoginResult loginResult = await FacebookAuth.instance.login();
+
+      // Create a credential from the access token
+      final OAuthCredential facebookAuthCredential = FacebookAuthProvider
+          .credential(loginResult.accessToken!.tokenString);
+
+      // Once signed in, return the UserCredential
+      FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
+      Navigator.pushNamed(context, 'homepage');
+    }catch(e){
+      print("Error with sign in facebook: $e");
+
+    }
+  }
+
+/*
+dispose() is called automatically when a widget’s state is permanently destroyed.
+Why it's important: It prevents memory leaks by ensuring that unnecessary resources are released.
+ */
+  @override
+  void dispose() {
+    emailController.dispose();
+    passController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -43,14 +156,27 @@ class _SigninScreenState extends State<SigninScreen> {
             SizedBox(
               height: 80.h,
             ),
-            Container(
-              margin: EdgeInsets.only(left: 10, right: 10),
-              width: 400,
-              color: Colors.white,
-              child: TextFormField(
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                    labelText: 'Email', border: OutlineInputBorder()),
+            Form(
+              key: formKey,
+              child: Container(
+                margin: EdgeInsets.only(left: 10, right: 10),
+                width: 400,
+                color: Colors.white,
+                child: TextFormField(
+                  validator:(value){
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter email';
+                    }
+                    else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      return 'Please enter a valid email address';
+                    }
+                    return null;
+                  },
+                  controller:emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                      labelText: 'Email', border: OutlineInputBorder()),
+                ),
               ),
             ),
             SizedBox(
@@ -61,13 +187,35 @@ class _SigninScreenState extends State<SigninScreen> {
               width: 400.w,
               color: Colors.white,
               child: TextFormField(
-                obscureText: true,
+                validator:(value){
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter password';
+                  }
+                  return null;
+                },
+                controller:passController,
+                obscureText: !passwordVisible,//This will obscure text dynamically
                 decoration: InputDecoration(
-                  labelText: 'Password',
-                  border: OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    // Based on passwordVisible state choose the icon
+                    passwordVisible
+                        ? Icons.visibility
+                        : Icons.visibility_off,
+                    color: Theme.of(context).primaryColorDark,
+                  ),
+                  onPressed: () {
+                    //Toggle the state of passwordVisible variable
+                    setState(() {
+                      passwordVisible = !passwordVisible;
+                    });
+                  },
+                ),
+                border: const OutlineInputBorder(),
+                labelText: 'Enter Your Password',
+              ),
                 ),
               ),
-            ),
             Padding(
               padding: const EdgeInsets.only(left: 230,top: 10),
               child: GestureDetector(
@@ -86,7 +234,9 @@ class _SigninScreenState extends State<SigninScreen> {
               child: MaterialButton(
                 minWidth: 100.w,
                 onPressed: () {
-                  Navigator.of(context).pushNamed('homepage');
+                  if(formKey.currentState!.validate()){
+                    signIn();
+                  }
                 },
                 child: Text(
                   'Login',
@@ -114,7 +264,7 @@ class _SigninScreenState extends State<SigninScreen> {
                   decoration: BoxDecoration(color: Colors.indigo[50],borderRadius: BorderRadius.circular(50)),
                   child: MaterialButton(
                     onPressed: () {
-                      signInWithFacebook(context);
+                      signInWithFacebook();
                     },
                     child: Image.asset(
                       'assets/images/fb1.png',
@@ -130,7 +280,7 @@ class _SigninScreenState extends State<SigninScreen> {
                   decoration: BoxDecoration(color: Colors.indigo[50],borderRadius: BorderRadius.circular(50)),
                   child: MaterialButton(
                     onPressed: () {
-                      signInWithGoogle(context);
+                      signInWithGoogle();
                     },
                     child: Image.asset(
                       'assets/images/google.png',
@@ -149,7 +299,7 @@ class _SigninScreenState extends State<SigninScreen> {
                       margin: EdgeInsets.only(top: 50, bottom: 15),
                       child: Center(
                           child: Text(
-                        'Dont have an account?',
+                        "Don't have an account?",
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                       ))),
                 ),
@@ -180,61 +330,61 @@ class _SigninScreenState extends State<SigninScreen> {
   }
 }
 
-Future<UserCredential?> signInWithGoogle(BuildContext context) async {
-  try {
-    final GoogleSignIn googleSignIn = GoogleSignIn(
-      scopes: <String>[
-        'email',
-      ],
-    );
-
-    // Ensure user is logged out before showing the sign-in screen
-    await googleSignIn.signOut();
-
-    // Prompt user to select an account
-    final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-
-    if (googleUser == null) {
-      // The user canceled the sign-in
-      return null;
-    }
-
-    final GoogleSignInAuthentication googleAuth =
-        await googleUser.authentication;
-
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
-
-    final userCredential =
-        await FirebaseAuth.instance.signInWithCredential(credential);
-
-    // Navigate to the homepage after successful sign-in
-    Navigator.of(context).pushNamed('homepage');
-
-    return userCredential;
-  } on FirebaseAuthException catch (e) {
-    print('Error during Google sign-in: $e');
-    AwesomeDialog(
-      context: context,
-      dialogType: DialogType.error,
-      animType: AnimType.rightSlide,
-      title: 'Google Sign-In Failed',
-      desc: 'Please try again.',
-    ).show();
-    return null;
-  }
-}
-
-Future<UserCredential> signInWithFacebook(BuildContext context) async {
-  // Trigger the sign-in flow
-  final LoginResult loginResult = await FacebookAuth.instance.login();
-
-  // Create a credential from the access token
-  final OAuthCredential facebookAuthCredential =
-      FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
-  Navigator.of(context).pushReplacementNamed('homepage');
-  // Once signed in, return the UserCredential
-  return FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
-}
+// Future<UserCredential?> signInWithGoogle(BuildContext context) async {
+//   try {
+//     final GoogleSignIn googleSignIn = GoogleSignIn(
+//       scopes: <String>[
+//         'email',
+//       ],
+//     );
+//
+//     // Ensure user is logged out before showing the sign-in screen
+//     await googleSignIn.signOut();
+//
+//     // Prompt user to select an account
+//     final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+//
+//     if (googleUser == null) {
+//       // The user canceled the sign-in
+//       return null;
+//     }
+//
+//     final GoogleSignInAuthentication googleAuth =
+//         await googleUser.authentication;
+//
+//     final credential = GoogleAuthProvider.credential(
+//       accessToken: googleAuth.accessToken,
+//       idToken: googleAuth.idToken,
+//     );
+//
+//     final userCredential =
+//         await FirebaseAuth.instance.signInWithCredential(credential);
+//
+//     // Navigate to the homepage after successful sign-in
+//     Navigator.of(context).pushNamed('homepage');
+//
+//     return userCredential;
+//   } on FirebaseAuthException catch (e) {
+//     print('Error during Google sign-in: $e');
+//     AwesomeDialog(
+//       context: context,
+//       dialogType: DialogType.error,
+//       animType: AnimType.rightSlide,
+//       title: 'Google Sign-In Failed',
+//       desc: 'Please try again.',
+//     ).show();
+//     return null;
+//   }
+// }
+//
+// Future<UserCredential> signInWithFacebook(BuildContext context) async {
+//   // Trigger the sign-in flow
+//   final LoginResult loginResult = await FacebookAuth.instance.login();
+//
+//   // Create a credential from the access token
+//   final OAuthCredential facebookAuthCredential =
+//       FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
+//   Navigator.of(context).pushReplacementNamed('homepage');
+//   // Once signed in, return the UserCredential
+//   return FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
+// }

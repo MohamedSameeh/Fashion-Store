@@ -1,6 +1,8 @@
 import 'package:depi_final_project/presentation/screens/Profile/SettingsPage.dart';
 import 'package:depi_final_project/presentation/screens/Bag/ShippingAddressesPage.dart'; // Import the ShippingAddressesPage
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -122,6 +124,20 @@ class _ProfilePageState extends State<ProfilePage> {
                   },
                 );
               }).toList(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  IconButton(onPressed: () async {
+                  //sign out from google account
+                  GoogleSignIn googleSignIn=GoogleSignIn();
+                  googleSignIn.disconnect();
+                  //sign out from firebase
+                  await FirebaseAuth.instance.signOut();
+
+                  Navigator.pushNamed(context, 'signIn');
+                }, icon: Icon(Icons.exit_to_app)),
+              ]
+              )
             ],
           ),
         ),
