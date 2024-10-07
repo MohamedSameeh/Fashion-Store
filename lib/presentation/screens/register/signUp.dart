@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
 
@@ -40,7 +41,9 @@ class _SignupScreenState extends State<SignupScreen> {
       title: "Success",
       desc: "Sign Up Successfully",
       btnCancelOnPress: () {},
-      btnOkOnPress: () {
+      btnOkOnPress: () async {
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setBool('loginOrNot',true); //change the state of user login or not
         Navigator.pushNamed(context, 'homepage');
       },
     ).show();
@@ -58,7 +61,7 @@ class _SignupScreenState extends State<SignupScreen> {
       FirebaseAuth.instance.currentUser!.sendEmailVerification();
 
       //add user details to fire store
-      addUserDetails(nameController.text, emailController.text, passController.text);
+      addUserDetails(nameController.text, emailController.text, passController.text,"");
 
       //show success message and go to sign in screen
       AwesomeDialog(
@@ -68,8 +71,10 @@ class _SignupScreenState extends State<SignupScreen> {
         title: "Success",
         desc: "Sign Up Successfully",
         btnCancelOnPress: () {},
-        btnOkOnPress: () {
-          Navigator.pushNamed(context, 'signIn');
+        btnOkOnPress: () async {
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setBool('loginOrNot',true); //change the state of user login or not
+          Navigator.pushReplacementNamed(context, 'signIn');
         },
       ).show();
 
@@ -87,16 +92,20 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  Future addUserDetails(String user_name,String email,String password)async{
-    await FirebaseFirestore.instance.collection('Users').add({
+  Future addUserDetails(String user_name,String email,String password,String phone)async{
+    var firebaseUser=await FirebaseAuth.instance.currentUser;
+    //the id of user is the same of the id of document
+    await FirebaseFirestore.instance.collection('Users').doc(firebaseUser?.uid).set({
+      'uid':firebaseUser?.uid,
       'user name': user_name,
       'Email': email,
-      'password': password
+      'password': password,
+      'phone number':phone
     });
   }
   Future signInWithGoogle() async {
     try {
-      // Trigger the authentication flow
+
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
       if (googleUser == null) { //if user not choose account and disable the dialog this condition not complete te body of function to not happen any error
@@ -106,16 +115,12 @@ class _SignupScreenState extends State<SignupScreen> {
       // Obtain the auth details from the request
       final GoogleSignInAuthentication? googleAuth = await googleUser.authentication;
 
-      // Create a new credential
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth?.accessToken,
         idToken: googleAuth?.idToken,
       );
 
-      // Once signed in, return the UserCredential
        await FirebaseAuth.instance.signInWithCredential(credential);
-
-
 
       //show success message and go to homepage
       _showSuccessMessageAndGoToHome();
@@ -361,97 +366,3 @@ class _SignupScreenState extends State<SignupScreen> {
       );
   }
 }
-
-// Future<UserCredential?> signInWithGoogle(BuildContext context) async {
-//   try {
-//     final GoogleSignIn googleSignIn = GoogleSignIn(
-//       scopes: <String>[
-//         'email',
-//       ],
-//     );
-//
-//     // Ensure user is logged out before showing the sign-in screen
-//     await googleSignIn.signOut();
-//
-//     // Prompt user to select an account
-//     final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-//
-//     if (googleUser == null) {
-//       // The user canceled the sign-in
-//       return null;
-//     }
-//
-//     final GoogleSignInAuthentication googleAuth =
-//         await googleUser.authentication;
-//
-//     final credential = GoogleAuthProvider.credential(
-//       accessToken: googleAuth.accessToken,
-//       idToken: googleAuth.idToken,
-//     );
-//
-//     final userCredential =
-//         await FirebaseAuth.instance.signInWithCredential(credential);
-//
-//     // Navigate to the homepage after successful sign-in
-//     Navigator.of(context).pushNamed('homepage');
-//
-//     return userCredential;
-//   } on FirebaseAuthException catch (e) {
-//     print('Error during Google sign-in: $e');
-//     AwesomeDialog(
-//       context: context,
-//       dialogType: DialogType.error,
-//       animType: AnimType.rightSlide,
-//       title: 'Google Sign-In Failed',
-//       desc: 'Please try again.',
-//     ).show();
-//     return null;
-//   }
-// }
-//
-// Future<UserCredential?> signInWithFacebook(BuildContext context) async {
-//   try {
-//     // Trigger the sign-in flow
-//     final LoginResult loginResult = await FacebookAuth.instance.login();
-//
-//     // Check if the login was successful
-//     if (loginResult.status == LoginStatus.success) {
-//       // Create a credential from the access token
-//       final OAuthCredential facebookAuthCredential = FacebookAuthProvider.credential(
-//         loginResult.accessToken!.tokenString, // Change this to loginResult.accessToken!.value if needed
-//       );
-//
-//       // Once signed in, return the UserCredential
-//       final UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
-//
-//       // Navigate to the homepage after successful sign-in
-//       Navigator.of(context).pushReplacementNamed('homepage');
-//
-//       return userCredential;
-//     } else {
-//       // Handle error for unsuccessful login
-//       String message;
-//       if (loginResult.status == LoginStatus.cancelled) {
-//         message = 'Login cancelled';
-//       } else {
-//         message = 'Login failed: ${loginResult.message}';
-//       }
-//       throw Exception(message);
-//     }
-//   } on FirebaseAuthException catch (e) {
-//     // Handle Firebase authentication error
-//     print('FirebaseAuthException: $e');
-//     return null;
-//   } catch (e) {
-//     // Handle any other errors
-//     print('Error during Facebook sign-in: $e');
-//     AwesomeDialog(
-//       context: context,
-//       dialogType: DialogType.error,
-//       animType: AnimType.rightSlide,
-//       title: 'Login Failed',
-//       desc: e.toString(),
-//     ).show();
-//     return null;
-//   }
-// }

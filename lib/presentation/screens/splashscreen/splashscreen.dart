@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   @override
@@ -10,7 +11,9 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(Duration(seconds: 2), () {
+    Timer(Duration(seconds: 2), () async {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+       prefs.setBool('isFirstTime',false); //change the state of onboarding screen
       Navigator.pushReplacementNamed(context, 'onBoarding');
     });
   }
