@@ -1,4 +1,5 @@
 import 'package:depi_final_project/presentation/screens/Profile/Profile_Page.dart';
+import 'package:depi_final_project/presentation/screens/Profile/UpdateUserInformationPage.dart';
 import 'package:depi_final_project/presentation/screens/Review/RatingReviewsScreen.dart';
 import 'package:depi_final_project/presentation/screens/Homepage/homePage.dart';
 import 'package:depi_final_project/presentation/screens/Shop/kids_categories.dart/kids_accesories.dart';
@@ -83,6 +84,7 @@ class MyApp extends StatelessWidget {
                 'sales_view_all':(context)=>SalesViewAllPage(),
                 'new_view_all':(context)=>NewViewAllPage(),
                 'forgot_password':(context)=>ForgotpasswordScreen(),
+                'updateUserInformation':(context)=>UpdateUserInformationPage()
               });
         });
   }

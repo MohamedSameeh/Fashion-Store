@@ -5,14 +5,14 @@ import 'package:flutter/material.dart';
 
 import '../register/forgotPassword.dart';
 
-class SettingsPage extends StatefulWidget {
-  const SettingsPage({super.key});
+class UpdateUserInformationPage extends StatefulWidget {
+  const UpdateUserInformationPage({super.key});
 
   @override
-  _SettingsPageState createState() => _SettingsPageState();
+  _UpdateUserInformationPageState createState() => _UpdateUserInformationPageState();
 }
 
-class _SettingsPageState extends State<SettingsPage> {
+class _UpdateUserInformationPageState extends State<UpdateUserInformationPage> {
   final _formKey = GlobalKey<FormState>();
   TextEditingController fullNameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
@@ -122,7 +122,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Personal Information',
+                      Text('Update Personal Information',
                           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                       SizedBox(height: 10),
                       TextField(

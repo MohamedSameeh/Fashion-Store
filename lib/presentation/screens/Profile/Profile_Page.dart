@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:depi_final_project/presentation/screens/Profile/SettingsPage.dart';
+import 'package:depi_final_project/presentation/screens/Profile/UpdateUserInformationPage.dart';
 import 'package:depi_final_project/presentation/screens/Bag/ShippingAddressesPage.dart'; // Import the ShippingAddressesPage
+import 'package:depi_final_project/presentation/screens/Profile/UserInformationPage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -154,7 +155,7 @@ class _ProfilePageState extends State<ProfilePage> {
                           } else if (item['title'] == 'Settings') {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => SettingsPage()),
+                              MaterialPageRoute(builder: (context) => UserInformationPage()),
                             );
                           }
                         },
