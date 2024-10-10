@@ -1,3 +1,4 @@
+import 'package:depi_final_project/presentation/models/product_model.dart';
 import 'package:depi_final_project/presentation/screens/Profile/Profile_Page.dart';
 import 'package:depi_final_project/presentation/screens/Profile/UpdateUserInformationPage.dart';
 import 'package:depi_final_project/presentation/screens/Review/RatingReviewsScreen.dart';
@@ -26,24 +27,27 @@ import 'package:depi_final_project/presentation/widgets/productdetails.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'firebase_options.dart';
 
-bool isFirstTime=true;
-bool loginOrNot=true;
+bool isFirstTime = true;
+bool loginOrNot = true;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,);
-   //to handle on boarding screens
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    isFirstTime = prefs.getBool('isFirstTime') ?? true; //default is true
-    loginOrNot=prefs.getBool('loginOrNot')??true;
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  //to handle on boarding screens
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  isFirstTime = prefs.getBool('isFirstTime') ?? true; //default is true
+  loginOrNot = prefs.getBool('loginOrNot') ?? true;
 
-    runApp(MyApp());
-    print(isFirstTime);
+  runApp(MyApp());
+  print(isFirstTime);
 }
 
 class MyApp extends StatelessWidget {
@@ -58,9 +62,11 @@ class MyApp extends StatelessWidget {
         builder: (_, child) {
           return MaterialApp(
               debugShowCheckedModeBanner: false,
-              initialRoute: isFirstTime==true?'splashScreen':(loginOrNot==true?'homepage':'signIn'),
+              initialRoute: isFirstTime == true
+                  ? 'splashScreen'
+                  : (loginOrNot == true ? 'homepage' : 'signIn'),
               routes: {
-                'splashScreen':(context)=>SplashScreen(),
+                'splashScreen': (context) => SplashScreen(),
                 'signIn': (context) => SigninScreen(),
                 'signUp': (context) => SignupScreen(),
                 'homepage': (context) => Homepage(),
@@ -76,17 +82,20 @@ class MyApp extends StatelessWidget {
                 'clothes_kids': (context) => KidsClothes(),
                 'shoes_kids': (context) => KidsShoes(),
                 'accesories_kids': (context) => KidsAccesories(),
-                'details_screen': (context) => ProductDetailsPage(),
+                'details_screen': (context) => ProductDetailsPage(
+                      product:
+                          ModalRoute.of(context)!.settings.arguments as Product,
+                    ),
                 'favorites_screen': (context) => FavoriteScreen(),
                 'onBoarding': (context) => Onboardingscreen(),
-                'rating_reviews':(context)=>RatingAndReviewPage(),
-                'profilePage':(context)=>ProfilePage(),
-                'sales_view_all':(context)=>SalesViewAllPage(),
-                'new_view_all':(context)=>NewViewAllPage(),
-                'forgot_password':(context)=>ForgotpasswordScreen(),
-                'updateUserInformation':(context)=>UpdateUserInformationPage()
+                'rating_reviews': (context) => RatingAndReviewPage(),
+                'profilePage': (context) => ProfilePage(),
+                'sales_view_all': (context) => SalesViewAllPage(),
+                'new_view_all': (context) => NewViewAllPage(),
+                'forgot_password': (context) => ForgotpasswordScreen(),
+                'updateUserInformation': (context) =>
+                    UpdateUserInformationPage()
               });
         });
   }
 }
-

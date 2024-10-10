@@ -12,8 +12,9 @@ class _SalesViewAllPageState extends State<SalesViewAllPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      
-      body: CategoriesDetails(type: "Sales",),
+      body: CategoriesDetails(
+        type: "Sale",
+      ),
     );
   }
 }

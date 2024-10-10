@@ -1,4 +1,3 @@
-import 'package:depi_final_project/presentation/widgets/homepage_new_sale.dart';
 import 'package:depi_final_project/presentation/widgets/categoriesDetails.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +12,8 @@ class _NewWomenState extends State<NewWomen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: CategoriesDetails(type: "Women New ",)
-    );
+        body: CategoriesDetails(
+      type: "Women New ",
+    ));
   }
 }

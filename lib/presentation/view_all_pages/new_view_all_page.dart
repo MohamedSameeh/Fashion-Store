@@ -12,7 +12,9 @@ class _NewViewAllPageState extends State<NewViewAllPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body:CategoriesDetails(type: "New ",),
+      body: CategoriesDetails(
+        type: "New",
+      ),
     );
   }
 }

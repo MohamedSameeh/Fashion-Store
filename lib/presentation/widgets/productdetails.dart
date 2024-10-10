@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
+import '../models/product_model.dart';
 
 class ProductDetailsPage extends StatefulWidget {
+  final Product product;
+
+  const ProductDetailsPage({super.key, required this.product});
+
   @override
   _ProductDetailsPageState createState() => _ProductDetailsPageState();
 }
@@ -9,17 +16,20 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   String selectedSize = 'M';
   String selectedColor = 'Black';
 
+  List<String> sizes = ['S', 'M', 'L', 'XL'];
+  List<String> colors = ['Black', 'White', 'Red'];
+
   List<String> recommendedProducts = [
-    'assets/images/8.jpeg',
-    'assets/images/10.jpg',
-    'assets/images/11.jpg',
+    'https://example.com/images/8.jpeg',
+    'https://example.com/images/10.jpg',
+    'https://example.com/images/11.jpg',
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Short dress'),
+        title: Text(widget.product.name), // Update title with product name
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
@@ -41,18 +51,15 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
             // Product Image and Details
             Stack(
               children: [
-                Image.asset('assets/images/12.jpg', height: 350, fit: BoxFit.cover),
-                Positioned(
-                  right: 20,
-                  top: 320,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    
+                CachedNetworkImage(
+                  imageUrl: widget.product.images[0],
+                  height: 350,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Center(
+                    child: CircularProgressIndicator(),
                   ),
-                )
+                  errorWidget: (context, url, error) => Icon(Icons.error),
+                ),
               ],
             ),
             SizedBox(height: 20),
@@ -62,11 +69,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Short dress',
-                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
-                          SizedBox(width: 100,),
-                            Text('\$19.99',
+                      Text(widget.product.name,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 24)),
+                      Text('\$${widget.product.price}',
                           style: TextStyle(
                               color: Colors.redAccent,
                               fontWeight: FontWeight.bold,
@@ -84,8 +92,8 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                             selectedSize = newValue!;
                           });
                         },
-                        items: <String>['S', 'M', 'L', 'XL']
-                            .map<DropdownMenuItem<String>>((String value) {
+                        items:
+                            sizes.map<DropdownMenuItem<String>>((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
                             child: Text(value),
@@ -99,7 +107,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                             selectedColor = newValue!;
                           });
                         },
-                        items: <String>['Black', 'White', 'Red']
+                        items: colors
                             .map<DropdownMenuItem<String>>((String value) {
                           return DropdownMenuItem<String>(
                             value: value,
@@ -107,15 +115,15 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                           );
                         }).toList(),
                       ),
-                    IconButton(
-                      icon: Icon(Icons.favorite_border),
-                      onPressed: () {},
-                    ),
+                      IconButton(
+                        icon: Icon(Icons.favorite_border),
+                        onPressed: () {},
+                      ),
                     ],
                   ),
                   SizedBox(height: 10),
                   Text(
-                    'Short dress in soft cotton jersey with decorative buttons down the front and a wide frill-trimmed edge.',
+                    widget.product.description,
                     style: TextStyle(color: Colors.grey),
                   ),
                   SizedBox(height: 20),
@@ -123,12 +131,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.redAccent,
-                        padding: EdgeInsets.symmetric(horizontal: 100, vertical: 15),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 100, vertical: 15),
                       ),
                       onPressed: () {
                         // Add to cart action
                       },
-                      child: Text('ADD TO CART', style: TextStyle(fontSize: 18)),
+                      child:
+                          Text('ADD TO CART', style: TextStyle(fontSize: 18)),
                     ),
                   ),
                   SizedBox(height: 20),
@@ -163,11 +173,16 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                   children: [
                                     ClipRRect(
                                       borderRadius: BorderRadius.circular(10),
-                                      child: Image.asset(
-                                        recommendedProducts[index],
+                                      child: CachedNetworkImage(
+                                        imageUrl: recommendedProducts[index],
                                         width: 150,
                                         height: 150,
                                         fit: BoxFit.cover,
+                                        placeholder: (context, url) => Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            Icon(Icons.error),
                                       ),
                                     ),
                                     if (index == 0)
@@ -180,27 +195,31 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                           color: Colors.redAccent,
                                           child: Text(
                                             '-20%',
-                                            style: TextStyle(color: Colors.white),
+                                            style:
+                                                TextStyle(color: Colors.white),
                                           ),
                                         ),
                                       ),
                                     Positioned(
                                       right: 5,
                                       bottom: 0,
-                                      child: IconButton(icon:Icon(Icons.favorite_border),
-                                          color: Colors.white,
-                                          onPressed: (){},),
+                                      child: IconButton(
+                                        icon: Icon(Icons.favorite_border),
+                                        color: Colors.white,
+                                        onPressed: () {},
+                                      ),
                                     ),
                                   ],
                                 ),
                                 SizedBox(height: 5),
                                 Text(
-                                  'Product Name',
+                                  'Product Name', // Replace with actual product name
                                   style: TextStyle(
-                                      fontWeight: FontWeight.bold, fontSize: 16),
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16),
                                 ),
                                 Text(
-                                  '\$15.99',
+                                  '\$15.99', // Replace with actual product price
                                   style: TextStyle(
                                       color: Colors.redAccent, fontSize: 14),
                                 ),
@@ -213,7 +232,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   ),
                 ],
               ),
-            )
+            ),
           ],
         ),
       ),

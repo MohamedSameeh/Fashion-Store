@@ -1,9 +1,6 @@
-import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
-import '../register/forgotPassword.dart';
 
 class UserInformationPage extends StatefulWidget {
   const UserInformationPage({super.key});
@@ -20,27 +17,29 @@ class _UserInformationPageState extends State<UserInformationPage> {
   TextEditingController dateController = TextEditingController();
   DateTime selectedDate = DateTime(1989, 12, 12);
 
-
-  Future<Map<String, dynamic>?> _fetchUserData() async{
+  Future<Map<String, dynamic>?> _fetchUserData() async {
     try {
       final firebaseUser = FirebaseAuth.instance.currentUser;
-      DocumentSnapshot doc = await FirebaseFirestore.instance.collection('Users').doc(firebaseUser?.uid).get();
+      DocumentSnapshot doc = await FirebaseFirestore.instance
+          .collection('Users')
+          .doc(firebaseUser?.uid)
+          .get();
 
       if (doc.exists) {
         Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
         if (data != null) {
-          fullName=data['user name'] ;
-          email=data['Email'] ;
-          phone=data['phone number'];
+          fullName = data['user name'];
+          email = data['Email'];
+          phone = data['phone number'];
         } else {
           print('Document data is null');
         }
       } else {
         print('Document does not exist');
       }
+    } catch (e) {
+      print("error.............$e");
     }
-    catch(e){
-      print("error.............$e");}
   }
 
   @override
@@ -83,11 +82,11 @@ class _UserInformationPageState extends State<UserInformationPage> {
       body: FutureBuilder(
         future: _fetchUserData(),
         builder: (context, snapshot) {
-          if (snapshot.connectionState !=ConnectionState.done) {
+          if (snapshot.connectionState != ConnectionState.done) {
             return Text('Loading Your Data...');
           } else if (snapshot.hasError) {
             return Center(child: Text('Error loading user data'));
-          } else  {
+          } else {
             return Padding(
               padding: const EdgeInsets.all(16.0),
               child: Form(
@@ -96,37 +95,51 @@ class _UserInformationPageState extends State<UserInformationPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('Personal Information',
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     SizedBox(height: 20),
                     Row(
                       children: [
-                        Text('Name: ',style:TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text(fullName,style:TextStyle(fontSize: 16, fontWeight: FontWeight.normal) ),
+                        Text('Name: ',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text(fullName,
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.normal)),
                       ],
                     ),
                     SizedBox(height: 20),
                     Row(
                       children: [
-                        Text('Email: ',style:TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text(email,style:TextStyle(fontSize: 16, fontWeight: FontWeight.normal) ),
+                        Text('Email: ',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text(email,
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.normal)),
                       ],
                     ),
                     SizedBox(height: 20),
                     Row(
                       children: [
-                        Text('Phone Number: ',style:TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text(phone,style:TextStyle(fontSize: 16, fontWeight: FontWeight.normal) ),
+                        Text('Phone Number: ',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        Text(phone,
+                            style: TextStyle(
+                                fontSize: 16, fontWeight: FontWeight.normal)),
                       ],
                     ),
                     SizedBox(height: 20),
                     GestureDetector(
                       onTap: () {
-                       // _selectDate(context);
+                        // _selectDate(context);
                       },
                       child: AbsorbPointer(
                         child: TextField(
                           controller: dateController,
-                          decoration: InputDecoration(labelText: 'Date of Birth'),
+                          decoration:
+                              InputDecoration(labelText: 'Date of Birth'),
                         ),
                       ),
                     ),
@@ -142,8 +155,8 @@ class _UserInformationPageState extends State<UserInformationPage> {
                         minWidth: 70,
                         onPressed: () async {
                           //go to update screen
-                          Navigator.pushReplacementNamed(context, 'updateUserInformation');
-
+                          Navigator.pushReplacementNamed(
+                              context, 'updateUserInformation');
                         },
                         child: Text(
                           'Update',
@@ -164,4 +177,3 @@ class _UserInformationPageState extends State<UserInformationPage> {
     );
   }
 }
-
