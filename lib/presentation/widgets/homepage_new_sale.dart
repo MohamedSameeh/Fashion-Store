@@ -81,22 +81,22 @@ class HomepageNewSale extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.only(left: 15),
                 child: SizedBox(
-                  width: 180, // Ensure the text doesn't exceed this width
+                  width: 180,
                   child: Text(
                     product.description,
                     style: TextStyle(color: Colors.grey),
                     maxLines: 1, // Limit to 1 line
-                    overflow: TextOverflow.ellipsis, // Cut off with ellipsis
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ),
               Padding(
                 padding: const EdgeInsets.only(left: 15),
                 child: SizedBox(
-                  width: 180, // Ensure the text fits within this width
+                  width: 180,
                   child: Text(
                     product.name,
-                    overflow: TextOverflow.ellipsis, // Cut off with ellipsis
+                    overflow: TextOverflow.ellipsis,
                     maxLines: 1,
                     style: TextStyle(
                       color: Colors.black,

@@ -14,16 +14,16 @@ class CategoriesDetails extends StatefulWidget {
 }
 
 class _CategoriesDetailsState extends State<CategoriesDetails> {
-  late Stream<List<Product>> _productStream;
+  late Stream<List<Product>> productStream;
 
   @override
   void initState() {
     super.initState();
 
-    _productStream = _fetchProductsByType(widget.type);
+    productStream = fetchProductsByType(widget.type);
   }
 
-  Stream<List<Product>> _fetchProductsByType(String type) {
+  Stream<List<Product>> fetchProductsByType(String type) {
     if (type == "New") {
       return FirebaseFirestore.instance
           .collection('products')
@@ -46,10 +46,10 @@ class _CategoriesDetailsState extends State<CategoriesDetails> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.type + ' Products'),
+        title: Text('${widget.type} Products'),
       ),
       body: StreamBuilder<List<Product>>(
-        stream: _productStream,
+        stream: productStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());

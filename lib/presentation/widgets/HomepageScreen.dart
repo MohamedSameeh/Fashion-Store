@@ -54,7 +54,7 @@ class _HomepagescreenState extends State<Homepagescreen> {
     super.dispose();
   }
 
-  Stream<List<Product>> _streamProducts() {
+  Stream<List<Product>> streamProducts() {
     return FirebaseFirestore.instance.collection('products').snapshots().map(
         (snapshot) =>
             snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList());
@@ -64,13 +64,13 @@ class _HomepagescreenState extends State<Homepagescreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: StreamBuilder<List<Product>>(
-        stream: _streamProducts(),
+        stream: streamProducts(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Error fetching products'));
+            return Center(child: Text('Error'));
           }
 
           List<Product> products = snapshot.data ?? [];

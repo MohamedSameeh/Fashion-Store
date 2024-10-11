@@ -29,7 +29,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.product.name), // Update title with product name
+        title: Text(widget.product.name),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
@@ -48,7 +48,6 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            // Product Image and Details
             Stack(
               children: [
                 CachedNetworkImage(
@@ -213,13 +212,13 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                                 ),
                                 SizedBox(height: 5),
                                 Text(
-                                  'Product Name', // Replace with actual product name
+                                  'Product Name',
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16),
                                 ),
                                 Text(
-                                  '\$15.99', // Replace with actual product price
+                                  '\$15.99',
                                   style: TextStyle(
                                       color: Colors.redAccent, fontSize: 14),
                                 ),
