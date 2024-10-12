@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:share_plus/share_plus.dart'; // Import share_plus
 import '../models/product_model.dart';
 
 class ProductDetailsPage extends StatefulWidget {
@@ -35,6 +36,14 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
   CartEnum cartEnum = CartEnum.notExistInCart;
 
+  void shareProduct() {
+    String shareText = 'Check out this product: ${widget.product.name}\n'
+        'Description: ${widget.product.description}\n'
+        'Price: \$${widget.product.price}\n';
+
+    Share.share(shareText);
+  }
+
   @override
   Widget build(BuildContext context) {
     DocumentReference cartStream =
@@ -58,9 +67,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         actions: [
           IconButton(
             icon: Icon(Icons.share),
-            onPressed: () {
-              // Share action
-            },
+            onPressed: shareProduct,
           ),
         ],
       ),

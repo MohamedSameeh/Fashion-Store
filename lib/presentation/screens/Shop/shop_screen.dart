@@ -63,18 +63,11 @@ class _ShopScreenState extends State<ShopScreen>
       length: 3,
       child: Scaffold(
         appBar: AppBar(
-          actions: [
-            IconButton(
-                onPressed: () {
-                  showSearch(context: context, delegate: SearchDelegator());
-                },
-                icon: Icon(Icons.search))
-          ],
           title: Center(
               child: Text(
             'Categories',
             style: TextStyle(
-                fontSize: 30, color: Colors.black, fontWeight: FontWeight.bold),
+                fontSize: 28, color: Colors.black, fontWeight: FontWeight.bold),
           )),
           bottom: TabBar(
               indicatorColor: Colors.red,
