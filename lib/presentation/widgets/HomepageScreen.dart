@@ -1,9 +1,7 @@
 import 'dart:async';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:depi_final_project/presentation/widgets/homepage_new_sale.dart';
 import 'package:flutter/material.dart';
-
 import '../models/product_model.dart';
 
 class Homepagescreen extends StatefulWidget {
@@ -89,85 +87,94 @@ class _HomepagescreenState extends State<Homepagescreen> {
                   controller: _pageController,
                   itemCount: images.length,
                   itemBuilder: (context, index) {
-                    return Image.asset(
-                      images[index],
-                      fit: BoxFit.cover,
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(15),
+                      child: Image.asset(
+                        images[index],
+                        fit: BoxFit.cover,
+                      ),
                     );
                   },
                 ),
               ),
-              Row(
-                children: [
-                  Container(
-                    margin: EdgeInsets.only(left: 20, top: 20),
-                    child: Text(
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
                       'Sale',
                       style: TextStyle(
-                        fontSize: 40,
+                        fontSize: 36,
                         color: Colors.black,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 170),
-                    child: TextButton(
+                    TextButton(
                       onPressed: () {
                         Navigator.of(context).pushNamed('sales_view_all');
                       },
                       child: Text(
                         'View all',
-                        style: TextStyle(color: Colors.black, fontSize: 15),
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
-                    ),
-                  )
-                ],
+                    )
+                  ],
+                ),
               ),
-              Container(
-                margin: EdgeInsets.only(left: 20),
+              Padding(
+                padding: const EdgeInsets.only(left: 20, bottom: 10),
                 child: Text(
                   "Super summer sale",
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     color: Colors.grey,
                     fontWeight: FontWeight.normal,
                   ),
                 ),
               ),
               HomepageNewSale(type: 'Sale', products: saleProducts),
-              Row(
-                children: [
-                  Container(
-                    margin: EdgeInsets.only(left: 20),
-                    child: Text(
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
                       'New',
                       style: TextStyle(
-                        fontSize: 40,
+                        fontSize: 36,
                         color: Colors.black,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(left: 170),
-                    child: TextButton(
+                    TextButton(
                       onPressed: () {
                         Navigator.of(context).pushNamed('new_view_all');
                       },
                       child: Text(
                         'View all',
-                        style: TextStyle(color: Colors.black, fontSize: 15),
+                        style: TextStyle(
+                          color: Colors.redAccent,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-              Container(
-                margin: EdgeInsets.only(left: 20),
+              Padding(
+                padding: const EdgeInsets.only(left: 20, bottom: 10),
                 child: Text(
                   "You've never seen it before",
                   style: TextStyle(
-                    fontSize: 15,
+                    fontSize: 14,
                     color: Colors.grey,
                     fontWeight: FontWeight.normal,
                   ),

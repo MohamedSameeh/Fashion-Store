@@ -185,7 +185,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           child: Text(
             value,
             style: TextStyle(
-              color: value == selectedItem ? Colors.blue : Colors.black,
+              color: value == selectedItem ? Colors.brown : Colors.black,
               fontWeight:
                   value == selectedItem ? FontWeight.bold : FontWeight.normal,
             ),

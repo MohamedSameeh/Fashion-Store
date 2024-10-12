@@ -64,7 +64,10 @@ class _BagPageState extends State<BagPage> {
         title: Text(
           'My Bag',
           style: TextStyle(
-              color: Colors.black, fontSize: 24, fontWeight: FontWeight.bold),
+            color: Colors.black,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: Column(
@@ -85,6 +88,8 @@ class _BagPageState extends State<BagPage> {
                   );
                 } else if (snapshot.hasError) {
                   return Center(child: Text('Error loading cart'));
+                } else if (snapshot.data!.docs.isEmpty) {
+                  return _buildEmptyCart();
                 }
                 return ListView.builder(
                   itemCount: snapshot.data!.docs.length,
@@ -234,10 +239,10 @@ class _BagPageState extends State<BagPage> {
                 ),
                 SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {},
+                  onPressed: totalAmount > 0 ? () {} : null,
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 16),
-                    backgroundColor: Colors.red,
+                    backgroundColor: totalAmount > 0 ? Colors.red : Colors.grey,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                     ),
@@ -251,6 +256,32 @@ class _BagPageState extends State<BagPage> {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyCart() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.shopping_cart_outlined, size: 100, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'Your cart is empty',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: Colors.black54,
+            ),
+          ),
+          SizedBox(height: 8),
+          Text(
+            'Add items to your bag to get started!',
+            style: TextStyle(fontSize: 16, color: Colors.grey),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
