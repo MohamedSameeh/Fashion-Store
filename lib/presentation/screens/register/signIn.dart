@@ -14,14 +14,14 @@ class SigninScreen extends StatefulWidget {
 }
 
 class _SigninScreenState extends State<SigninScreen> {
-
-  var emailController=TextEditingController();
-  var passController=TextEditingController();
+  var emailController = TextEditingController();
+  var passController = TextEditingController();
   bool passwordVisible = false;
-  GlobalKey<FormState>formKey=GlobalKey<FormState>();
+  bool sendEmailVerification = false;
+  GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
-  void _showErrorMessage(String message,String title){
-    if(!mounted)return; //this to check if the screen still exist or no
+  void _showErrorMessage(String message, String title) {
+    if (!mounted) return; //this to check if the screen still exist or no
     AwesomeDialog(
       context: context,
       dialogType: DialogType.error,
@@ -31,24 +31,27 @@ class _SigninScreenState extends State<SigninScreen> {
       btnCancelOnPress: () {},
       btnOkOnPress: () {},
     ).show();
-
   }
+
   /*
     Future return type:The function is asynchronous, indicated by the Future keyword. It will perform the sign-in operation asynchronously and return a Future object, which allows you to handle success or failure at a later time.
     await keyword:The function waits for the sign-in process to complete before moving to the next line of code. This ensures that the operation is completed before the function proceeds (or returns an error if sign-in fails).
      */
-  Future signIn() async{
+  Future signIn() async {
     try {
       final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: emailController.text,
-          password: passController.text
+        email: emailController.text,
+        password: passController.text,
       );
-      if(credential.user!.emailVerified){
+      if (FirebaseAuth.instance.currentUser!.emailVerified) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setBool('loginOrNot',true); //change the state of user login or not
+        prefs.setBool('loginOrNot', true);
         Navigator.pushReplacementNamed(context, 'homepage');
-      }else{
-        if(!mounted)return; //this to check if the screen still exist or no
+      } else {
+        if (!mounted) return;
+        setState(() {
+          sendEmailVerification = true;
+        });
         AwesomeDialog(
           context: context,
           dialogType: DialogType.info,
@@ -58,16 +61,12 @@ class _SigninScreenState extends State<SigninScreen> {
           btnCancelOnPress: () {},
           btnOkOnPress: () {},
         ).show();
-
       }
-
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
         _showErrorMessage('No user found for that email.', 'Error!!!');
-
       } else if (e.code == 'wrong-password') {
         _showErrorMessage('Wrong password provided for that user.', 'Error!!!');
-
       }
     }
   }
@@ -76,45 +75,36 @@ class _SigninScreenState extends State<SigninScreen> {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
-      if (googleUser == null) { //if user not choose account and disable the dialog this condition not complete te body of function to not happen any error
+      if (googleUser == null) {
         return;
       }
-      final GoogleSignInAuthentication? googleAuth = await googleUser.authentication;
-
-      // Create a new credential
+      final GoogleSignInAuthentication? googleAuth =
+          await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth?.accessToken,
         idToken: googleAuth?.idToken,
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-      //go to homepage
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setBool('loginOrNot',true); //change the state of user login or not
+      prefs.setBool('loginOrNot', true); //change the state of user login or not
       Navigator.pushNamed(context, 'homepage');
-    }catch(e){
+    } catch (e) {
       print('Error during Google Sign In: $e');
-
     }
   }
 
   Future signInWithFacebook() async {
     try {
-      // Trigger the sign-in flow
       final LoginResult loginResult = await FacebookAuth.instance.login();
-
-      // Create a credential from the access token
-      final OAuthCredential facebookAuthCredential = FacebookAuthProvider
-          .credential(loginResult.accessToken!.tokenString);
-
-      // Once signed in, return the UserCredential
+      final OAuthCredential facebookAuthCredential =
+          FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
       FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setBool('loginOrNot',true); //change the state of user login or not
+      prefs.setBool('loginOrNot', true);
       Navigator.pushNamed(context, 'homepage');
-    }catch(e){
+    } catch (e) {
       print("Error with sign in facebook: $e");
-
     }
   }
 
@@ -132,53 +122,61 @@ Why it's important: It prevents memory leaks by ensuring that unnecessary resour
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
+      body: Form(
+        key: formKey,
         child: ListView(
           children: [
-            SizedBox(
-              height: 150.h,
+            SizedBox(height: 150.h),
+            Container(
+              margin: EdgeInsets.only(left: 20, top: 20, right: 20),
+              child: Text(
+                'Login',
+                style: TextStyle(
+                  fontSize: 35.sp,
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
             Container(
-                margin: EdgeInsets.only(left: 20, top: 20, right: 20),
-                child: Text(
-                  'Login',
-                  style: TextStyle(
-                      fontSize: 35.sp,
-                      color: Colors.black,
-                      fontWeight: FontWeight.bold),
-                )),
-            Container(
-                margin: EdgeInsets.only(left: 20, top: 10),
-                child: Text(
-                  'Login To Continue Using The App',
-                  style: TextStyle(
-                      fontSize: 15.sp,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.bold),
-                )),
-            SizedBox(
-              height: 80.h,
+              margin: EdgeInsets.only(left: 20, top: 10),
+              child: Text(
+                'Login To Continue Using The App',
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ),
-            Form(
-              key: formKey,
-              child: Container(
-                margin: EdgeInsets.only(left: 10, right: 10),
-                width: 400,
-                color: Colors.white,
-                child: TextFormField(
-                  validator:(value){
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter email';
-                    }
-                    else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                      return 'Please enter a valid email address';
-                    }
-                    return null;
-                  },
-                  controller:emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: InputDecoration(
-                      labelText: 'Email', border: OutlineInputBorder()),
+            SizedBox(height: 80.h),
+            sendEmailVerification == true
+                ? Center(
+                    child: ElevatedButton(
+                      onPressed: () {},
+                      child: Text("Send email verification"),
+                    ),
+                  )
+                : Text(""),
+            Container(
+              margin: EdgeInsets.only(left: 10, right: 10),
+              width: 400,
+              color: Colors.white,
+              child: TextFormField(
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter email';
+                  } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
+                      .hasMatch(value)) {
+                    return 'Please enter a valid email address';
+                  }
+                  return null;
+                },
+                controller: emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  labelText: 'Email',
+                  border: OutlineInputBorder(),
                 ),
               ),
             ),
@@ -190,42 +188,47 @@ Why it's important: It prevents memory leaks by ensuring that unnecessary resour
               width: 400.w,
               color: Colors.white,
               child: TextFormField(
-                validator:(value){
+                validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Please enter password';
                   }
                   return null;
                 },
-                controller:passController,
-                obscureText: !passwordVisible,//This will obscure text dynamically
+                controller: passController,
+                obscureText:
+                    !passwordVisible, //This will obscure text dynamically
                 decoration: InputDecoration(
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    // Based on passwordVisible state choose the icon
-                    passwordVisible
-                        ? Icons.visibility
-                        : Icons.visibility_off,
-                    color: Theme.of(context).primaryColorDark,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      // Based on passwordVisible state choose the icon
+                      passwordVisible ? Icons.visibility : Icons.visibility_off,
+                      color: Theme.of(context).primaryColorDark,
+                    ),
+                    onPressed: () {
+                      //Toggle the state of passwordVisible variable
+                      setState(() {
+                        passwordVisible = !passwordVisible;
+                      });
+                    },
                   ),
-                  onPressed: () {
-                    //Toggle the state of passwordVisible variable
-                    setState(() {
-                      passwordVisible = !passwordVisible;
-                    });
-                  },
-                ),
-                border: const OutlineInputBorder(),
-                labelText: 'Enter Your Password',
-              ),
+                  border: const OutlineInputBorder(),
+                  labelText: 'Enter Your Password',
                 ),
               ),
+            ),
             Padding(
-              padding: const EdgeInsets.only(left: 230,top: 10),
+              padding: const EdgeInsets.only(left: 230, top: 10),
               child: GestureDetector(
                 onTap: () {
                   Navigator.of(context).pushNamed('forgot_password');
                 },
-                child: Text('forgot password?',style: TextStyle(fontSize: 15,color: Colors.black,fontWeight: FontWeight.bold),),
+                child: Text(
+                  'forgot password?',
+                  style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             Container(
@@ -237,7 +240,7 @@ Why it's important: It prevents memory leaks by ensuring that unnecessary resour
               child: MaterialButton(
                 minWidth: 100.w,
                 onPressed: () {
-                  if(formKey.currentState!.validate()){
+                  if (formKey.currentState!.validate()) {
                     signIn();
                   }
                 },
@@ -251,20 +254,26 @@ Why it's important: It prevents memory leaks by ensuring that unnecessary resour
               ),
             ),
             Container(
-                margin: EdgeInsets.only(top: 30, bottom: 15),
-                child: Center(
-                    child: Text(
+              margin: EdgeInsets.only(top: 30, bottom: 15),
+              child: Center(
+                child: Text(
                   'Or Login With',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ))),
+                ),
+              ),
+            ),
             Container(
-              margin: EdgeInsets.only(right: 10, top: 20,left: 80),
+              margin: EdgeInsets.only(right: 10, top: 20, left: 80),
               child: Row(children: [
                 Container(
                   width: 80,
                   height: 80,
-                  margin: EdgeInsets.only(right: 20,),
-                  decoration: BoxDecoration(color: Colors.indigo[50],borderRadius: BorderRadius.circular(50)),
+                  margin: EdgeInsets.only(
+                    right: 20,
+                  ),
+                  decoration: BoxDecoration(
+                      color: Colors.indigo[50],
+                      borderRadius: BorderRadius.circular(50)),
                   child: MaterialButton(
                     onPressed: () {
                       signInWithFacebook();
@@ -280,7 +289,9 @@ Why it's important: It prevents memory leaks by ensuring that unnecessary resour
                   width: 80,
                   height: 80,
                   margin: EdgeInsets.only(left: 40),
-                  decoration: BoxDecoration(color: Colors.indigo[50],borderRadius: BorderRadius.circular(50)),
+                  decoration: BoxDecoration(
+                      color: Colors.indigo[50],
+                      borderRadius: BorderRadius.circular(50)),
                   child: MaterialButton(
                     onPressed: () {
                       signInWithGoogle();
@@ -299,38 +310,36 @@ Why it's important: It prevents memory leaks by ensuring that unnecessary resour
                 Padding(
                   padding: const EdgeInsets.only(left: 40),
                   child: Container(
-                      margin: EdgeInsets.only(top: 50, bottom: 15),
-                      child: Center(
-                          child: Text(
+                    margin: EdgeInsets.only(top: 50, bottom: 15),
+                    child: Center(
+                      child: Text(
                         "Don't have an account?",
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ))),
-                ),
-                    Container(
-              
-              margin: EdgeInsets.only(top: 34),
-              
-              child: MaterialButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed('signUp');
-                },
-                child: Text(
-                  'Sign up',
-                  style: TextStyle(
-                    fontSize: 20.sp,
-                    color: Color.fromARGB(255, 120, 82, 255),
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
+                Container(
+                  margin: EdgeInsets.only(top: 34),
+                  child: MaterialButton(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed('signUp');
+                    },
+                    child: Text(
+                      'Sign up',
+                      style: TextStyle(
+                        fontSize: 20.sp,
+                        color: Color.fromARGB(255, 120, 82, 255),
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
-            
           ],
         ),
       ),
     );
   }
 }
-
-

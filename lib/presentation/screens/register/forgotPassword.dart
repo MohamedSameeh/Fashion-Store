@@ -14,14 +14,14 @@ class ForgotpasswordScreen extends StatefulWidget {
 class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
   String address = "@gmail.com";
   TextEditingController gmailController = TextEditingController();
-  TextEditingController newPasswordController=TextEditingController();
-  bool isEmailSend=false; //to handel the UI
+  TextEditingController newPasswordController = TextEditingController();
+  bool isEmailSend = false; //to handel the UI
   bool passwordVisible = false;
 
   final _formKey = GlobalKey<FormState>();
 
-  void _showErrorMessage(String message,String title){
-    if(!mounted)return; //this to check if the screen still exist or no
+  void _showErrorMessage(String message, String title) {
+    if (!mounted) return; //this to check if the screen still exist or no
     AwesomeDialog(
       context: context,
       dialogType: DialogType.error,
@@ -31,16 +31,15 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
       btnCancelOnPress: () {},
       btnOkOnPress: () {},
     ).show();
-
   }
 
   Future<void> updateUserPassword() async {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
-      await FirebaseFirestore.instance.collection('Users').doc(currentUser?.uid).update({
-            'password': newPasswordController.text
-          });
-
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUser?.uid)
+          .update({'password': newPasswordController.text});
 
       //show success message
       AwesomeDialog(
@@ -54,12 +53,10 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
           Navigator.pushReplacementNamed(context, 'profilePage');
         },
       ).show();
-
     } catch (e) {
       print('Error updating password: $e');
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -73,7 +70,7 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
               Container(
                   margin: EdgeInsets.only(top: 10, left: 10),
                   child: Text(
-                    isEmailSend?"Set New Password": "Forgot Password",
+                    isEmailSend ? "Set New Password" : "Forgot Password",
                     style: TextStyle(
                         fontSize: 35.sp,
                         fontWeight: FontWeight.bold,
@@ -85,8 +82,9 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
               Padding(
                 padding: const EdgeInsets.all(10),
                 child: Text(
-                  isEmailSend?"Please enter your new password":
-                  'Please, enter your email address. You will receive a link to verify your email.',
+                  isEmailSend
+                      ? "Please enter your new password"
+                      : 'Please, enter your email address. You will receive a link to verify your email.',
                   style: TextStyle(color: Colors.black, fontSize: 15),
                 ),
               ),
@@ -94,7 +92,7 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    if(!isEmailSend) //show Email field
+                    if (!isEmailSend) //show Email field
                       Container(
                         margin: EdgeInsets.only(left: 10, right: 10, top: 15),
                         width: 400,
@@ -105,7 +103,7 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
                             if (val == null || val.isEmpty) {
                               return 'Email is required';
                             } else if (!RegExp(
-                                r'^[\w-\.]+@(gmail\.com|fsc\.bu\.edu\.eg|outlook\.com)$')
+                                    r'^[\w-\.]+@(gmail\.com|fsc\.bu\.edu\.eg|outlook\.com)$')
                                 .hasMatch(val)) {
                               return 'Enter a valid email (e.g., example@gmail.com)';
                             }
@@ -117,7 +115,7 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
                           ),
                         ),
                       ),
-                    if(isEmailSend) //show new password field
+                    if (isEmailSend) //show new password field
                       Container(
                         margin: EdgeInsets.only(left: 10, right: 10, top: 15),
                         width: 400,
@@ -163,25 +161,28 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
                         onPressed: () async {
                           if (_formKey.currentState!.validate()) {
                             //to handel if user enter wrong email
-                            if(!isEmailSend) {
-                              try{
-                                await FirebaseAuth.instance.sendPasswordResetEmail(email: gmailController.text);
+                            if (!isEmailSend) {
+                              try {
+                                await FirebaseAuth.instance
+                                    .sendPasswordResetEmail(
+                                        email: gmailController.text);
                                 setState(() {
                                   isEmailSend = true;
                                 });
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                ScaffoldMessenger.of(context)
+                                    .showSnackBar(SnackBar(
                                   content: Text('Email Verified successfully!'),
                                 ));
-                              }catch(e){
-                                _showErrorMessage("Enter correct Email....", "Error!!");
+                              } catch (e) {
+                                _showErrorMessage(
+                                    "Enter correct Email....", "Error!!");
                               }
-                            }
-                            else{
+                            } else {
                               // password update
                               updateUserPassword();
                             }
                           }
-                          },
+                        },
                         child: Text(
                           isEmailSend ? 'Change' : 'Send',
                           style: TextStyle(

@@ -21,16 +21,16 @@ class _UserInformationPageState extends State<UserInformationPage> {
     try {
       final firebaseUser = FirebaseAuth.instance.currentUser;
       DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('Users')
+          .collection('users')
           .doc(firebaseUser?.uid)
           .get();
 
       if (doc.exists) {
         Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
         if (data != null) {
-          fullName = data['user name'];
-          email = data['Email'];
-          phone = data['phone number'];
+          fullName = data['user_name'];
+          email = data['email'];
+          phone = data['phone_number'];
         } else {
           print('Document data is null');
         }

@@ -30,15 +30,15 @@ class _ProfilePageState extends State<ProfilePage> {
     try {
       final firebaseUser = FirebaseAuth.instance.currentUser;
       DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('Users')
+          .collection('users')
           .doc(firebaseUser?.uid)
           .get();
 
       if (doc.exists) {
         Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
         if (data != null) {
-          userName = data['user name'];
-          userEmail = data['Email'];
+          userName = data['user_name'];
+          userEmail = data['email'];
         } else {
           print('Document data is null');
         }
@@ -128,19 +128,6 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       SizedBox(height: 30),
 
-                      // Search TextField
-                      TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search...',
-                          border: OutlineInputBorder(),
-                          suffixIcon: Icon(Icons.search),
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            searchQuery = value; // Update the search query
-                          });
-                        },
-                      ),
                       SizedBox(height: 20),
 
                       // List of items (filtered based on search)

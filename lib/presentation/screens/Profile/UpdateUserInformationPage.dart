@@ -25,16 +25,16 @@ class _UpdateUserInformationPageState extends State<UpdateUserInformationPage> {
     try {
       final firebaseUser = FirebaseAuth.instance.currentUser;
       DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('Users')
+          .collection('users')
           .doc(firebaseUser?.uid)
           .get();
 
       if (doc.exists) {
         Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
         if (data != null) {
-          fullNameController.text = data['user name'];
-          emailController.text = data['Email'];
-          phoneController.text = data['phone number'];
+          fullNameController.text = data['user_name'];
+          emailController.text = data['email'];
+          phoneController.text = data['phone_number'];
         } else {
           print('Document data is null');
         }
@@ -51,12 +51,12 @@ class _UpdateUserInformationPageState extends State<UpdateUserInformationPage> {
     try {
       final currentUser = FirebaseAuth.instance.currentUser;
       await FirebaseFirestore.instance
-          .collection('Users')
+          .collection('users')
           .doc(currentUser?.uid)
           .update({
-        'user name': fullNameController.text,
-        'Email': emailController.text,
-        'phone number': phoneController.text,
+        'user_name': fullNameController.text,
+        'email': emailController.text,
+        'phone_number': phoneController.text,
       });
       //show success message
       AwesomeDialog(
