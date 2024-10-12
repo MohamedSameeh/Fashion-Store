@@ -10,7 +10,7 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      margin: const EdgeInsets.symmetric(horizontal: 5, vertical: 5),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
@@ -91,7 +91,7 @@ class ProductCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      '-${product.discount.toString()}% ', // Ensure discount is a num
+                      '-${product.discount.toString()}% ',
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
@@ -117,7 +117,7 @@ class ProductCard extends StatelessWidget {
                 SizedBox(height: 5),
                 if (product.discount > 0)
                   Text(
-                    '\$${(product.price + (product.price * product.discount / 100)).toStringAsFixed(2)}', // Original price
+                    '\$${(product.price + (product.price * product.discount / 100)).toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: Colors.grey,
                       fontSize: 14,
@@ -125,7 +125,7 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                 Text(
-                  '\$${(product.price - (product.price * product.discount / 100)).toStringAsFixed(2)}', // Discounted price
+                  '\$${(product.price - (product.price * product.discount / 100)).toStringAsFixed(2)}',
                   style: const TextStyle(
                     color: Colors.redAccent,
                     fontSize: 16,

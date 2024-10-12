@@ -328,17 +328,27 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10),
-              child: CachedNetworkImage(
-                imageUrl: product.images[0],
-                width: 150,
-                height: 150,
-                fit: BoxFit.cover,
-                placeholder: (context, url) =>
-                    const Center(child: CircularProgressIndicator()),
-                errorWidget: (context, url, error) =>
-                    const Icon(Icons.error, size: 50),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ProductDetailsPage(product: product),
+                  ),
+                );
+              },
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: CachedNetworkImage(
+                  imageUrl: product.images[0],
+                  width: 150,
+                  height: 150,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) =>
+                      const Center(child: CircularProgressIndicator()),
+                  errorWidget: (context, url, error) =>
+                      const Icon(Icons.error, size: 50),
+                ),
               ),
             ),
             const SizedBox(height: 5),
