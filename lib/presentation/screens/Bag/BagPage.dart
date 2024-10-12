@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -10,28 +11,47 @@ class BagPage extends StatefulWidget {
 }
 
 class _BagPageState extends State<BagPage> {
-  int _selectedIndex = 2;
+  double totalAmount = 0;
 
-  void _onTabSelected(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-    switch (index) {
-      case 0:
-        Navigator.pushNamed(context, '/homePage');
-        break;
-      case 1:
-        Navigator.pushNamed(context, '/shop_screen');
-        break;
-      case 2:
-        break;
-      case 3:
-        Navigator.pushNamed(context, '/favoritesScreen');
-        break;
-      case 4:
-        Navigator.pushNamed(context, '/Profile_Page');
-        break;
+  void updateQuantity(DocumentSnapshot doc, int quantityChange) {
+    int currentQuantity = doc['quantity'];
+    int newQuantity = currentQuantity + quantityChange;
+
+    if (newQuantity > 0) {
+      FirebaseFirestore.instance.collection('cart').doc(doc.id).update({
+        'quantity': newQuantity,
+      }).then((value) => calculateTotalPrice());
     }
+  }
+
+  void deleteItem(DocumentSnapshot doc) {
+    FirebaseFirestore.instance
+        .collection('cart')
+        .doc(doc.id)
+        .delete()
+        .then((value) => calculateTotalPrice());
+  }
+
+  void calculateTotalPrice() {
+    FirebaseFirestore.instance
+        .collection('cart')
+        .where('userid', isEqualTo: FirebaseAuth.instance.currentUser!.uid)
+        .get()
+        .then((snapshot) {
+      double total = 0;
+      for (var doc in snapshot.docs) {
+        total += doc['proprice'] * doc['quantity'];
+      }
+      setState(() {
+        totalAmount = total;
+      });
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    calculateTotalPrice();
   }
 
   @override
@@ -64,67 +84,132 @@ class _BagPageState extends State<BagPage> {
                     ),
                   );
                 } else if (snapshot.hasError) {
-                  return Center(child: Text('Error'));
+                  return Center(child: Text('Error loading cart'));
                 }
                 return ListView.builder(
                   itemCount: snapshot.data!.docs.length,
                   itemBuilder: (context, index) {
                     final item = snapshot.data!.docs[index];
                     return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 8.0, horizontal: 16.0),
                       child: Card(
-                        elevation: 2,
-                        child: ListTile(
-                          leading: Image.network(
-                            item['proimage'],
-                            width: 50,
-                            height: 50,
-                            fit: BoxFit.cover,
-                          ),
-                          title: Text(item['proname']),
-                          subtitle: Text(
-                              'Color: ${item['procolor']} | Size: ${item['prosize']}'),
-                          trailing: Expanded(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text('${item['proprice']}\$'),
-                                Container(
-                                  padding: EdgeInsets.only(),
-                                  height: 40,
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                            bottom: 0, top: 1),
-                                        child: IconButton(
-                                          icon: Icon(
-                                            Icons.remove,
-                                            size: 25,
-                                          ),
-                                          onPressed: () {},
-                                        ),
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12.0),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Product Image
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: CachedNetworkImage(
+                                  imageUrl: item['proimage'],
+                                  imageBuilder: (context, imageProvider) =>
+                                      Container(
+                                    width: 100,
+                                    height: 120,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(12),
+                                      image: DecorationImage(
+                                        image: imageProvider,
+                                        fit: BoxFit.fill,
                                       ),
-                                      // Padding(
-                                      //   padding: const EdgeInsets.only(top: 4),
-                                      //   child: Text(
-                                      //     item['quantity'].toString(),
-                                      //     style: TextStyle(fontSize: 20),
-                                      //   ),
-                                      // ),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.add,
-                                          size: 25,
-                                        ),
-                                        onPressed: () {},
-                                      ),
-                                    ],
+                                    ),
+                                  ),
+                                  placeholder: (context, url) => Container(
+                                    width: 100,
+                                    height: 120,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                                  errorWidget: (context, url, error) =>
+                                      Container(
+                                    width: 100,
+                                    height: 120,
+                                    child: Icon(Icons.error),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                              SizedBox(width: 16),
+                              // Product Details
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(item['proname'],
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                        )),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      'Color: ${item['procolor']} | Size: ${item['prosize']}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.grey[600],
+                                      ),
+                                    ),
+                                    SizedBox(height: 4),
+                                    Text(
+                                      '\$${item['proprice']}',
+                                      style: TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.red[600],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(width: 10),
+
+                              Column(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Quantity controls
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      border: Border.all(color: Colors.grey),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(Icons.remove, size: 20),
+                                          onPressed: () {
+                                            updateQuantity(item, -1);
+                                          },
+                                        ),
+                                        Text(
+                                          item['quantity'].toString(),
+                                          style: TextStyle(fontSize: 16),
+                                        ),
+                                        IconButton(
+                                          icon: Icon(Icons.add, size: 20),
+                                          onPressed: () {
+                                            updateQuantity(item, 1);
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  SizedBox(height: 10),
+                                  // Delete button
+                                  IconButton(
+                                    icon: Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () {
+                                      deleteItem(item);
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
                         ),
                       ),
@@ -142,21 +227,14 @@ class _BagPageState extends State<BagPage> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Total amount:', style: TextStyle(fontSize: 18)),
-                    Text('\$50',
+                    Text('\$$totalAmount',
                         style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
+                            fontSize: 20, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CheckoutPage(),
-                      ),
-                    );
-                  },
+                  onPressed: () {},
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: Colors.red,
@@ -176,172 +254,6 @@ class _BagPageState extends State<BagPage> {
           ),
         ],
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onTabSelected,
-        items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.shop), label: 'Shop'),
-          BottomNavigationBarItem(icon: Icon(Icons.shopping_bag), label: 'Bag'),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.favorite), label: 'Favorites'),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
-        ],
-      ),
-    );
-  }
-}
-
-class CheckoutPage extends StatelessWidget {
-  const CheckoutPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-        title: Text(
-          'Checkout',
-          style: TextStyle(color: Colors.black, fontSize: 24),
-        ),
-        centerTitle: true,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Shipping Address
-            Text('Shipping address',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            Card(
-              child: ListTile(
-                title: Text('Jane Doe'),
-                subtitle: Text(
-                    '3 Newbridge Court\nChino Hills, CA 91709, United States'),
-                trailing: TextButton(
-                  onPressed: () {},
-                  child: Text('Change', style: TextStyle(color: Colors.red)),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-            Text('Payment',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            Card(
-              child: ListTile(
-                leading: Image.asset('assets/images/mastercard.png', width: 40),
-                title: Text('**** **** **** 3947'),
-                trailing: TextButton(
-                  onPressed: () {},
-                  child: Text('Change', style: TextStyle(color: Colors.red)),
-                ),
-              ),
-            ),
-            SizedBox(height: 20),
-
-            Text('Delivery method',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                DeliveryMethodButton(
-                    image: 'assets/images/fedex.png',
-                    title: 'FedEx',
-                    days: '2-3 days'),
-                DeliveryMethodButton(
-                    image: 'assets/images/usps.png',
-                    title: 'USPS',
-                    days: '2-3 days'),
-                DeliveryMethodButton(
-                    image: 'assets/images/dhl.png',
-                    title: 'DHL',
-                    days: '2-3 days'),
-              ],
-            ),
-            SizedBox(height: 20),
-
-            // Order Summary
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Order:', style: TextStyle(fontSize: 16)),
-                Text('112\$',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Delivery:', style: TextStyle(fontSize: 16)),
-                Text('15\$',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Summary:',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Text('127\$',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              ],
-            ),
-            Spacer(),
-            ElevatedButton(
-              onPressed: () {
-                // Handle submit order
-              },
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.symmetric(vertical: 16),
-                backgroundColor: Colors.red,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
-              child: Center(
-                child: Text('SUBMIT ORDER',
-                    style: TextStyle(fontSize: 18, color: Colors.white)),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class DeliveryMethodButton extends StatelessWidget {
-  final String image;
-  final String title;
-  final String days;
-
-  const DeliveryMethodButton(
-      {required this.image, required this.title, required this.days});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Image.asset(image, width: 50),
-        SizedBox(height: 4),
-        Text(title, style: TextStyle(fontSize: 14)),
-        Text(days, style: TextStyle(fontSize: 12, color: Colors.grey)),
-      ],
     );
   }
 }
