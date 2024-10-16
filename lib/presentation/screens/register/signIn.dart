@@ -1,4 +1,5 @@
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
@@ -71,41 +72,95 @@ class _SigninScreenState extends State<SigninScreen> {
     }
   }
 
-  Future signInWithGoogle() async {
+  Future<void> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
 
       if (googleUser == null) {
-        return;
+        return; // User canceled the sign in
       }
-      final GoogleSignInAuthentication? googleAuth =
-          await googleUser.authentication;
+
+      final GoogleSignInAuthentication? googleAuth = await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth?.accessToken,
         idToken: googleAuth?.idToken,
       );
 
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      // Sign in to Firebase with Google credentials
+      UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+
+      // Get the signed-in user's email
+      String? email = userCredential.user?.email;
+
+      // Check if the user exists in Fire store
+      QuerySnapshot query = await FirebaseFirestore.instance.collection('users').where('email', isEqualTo: email).get();
+      if (query.docs.isEmpty) {
+        // create a new user in Fire store
+        addUserDetails(googleUser.displayName.toString(), email!, "", "", "");
+      }
+
+
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setBool('loginOrNot', true); //change the state of user login or not
+      prefs.setBool('loginOrNot', true);
+
+      // Navigate to the homepage
       Navigator.pushNamed(context, 'homepage');
     } catch (e) {
       print('Error during Google Sign In: $e');
     }
   }
 
-  Future signInWithFacebook() async {
+
+  Future<void> signInWithFacebook() async {
     try {
+
       final LoginResult loginResult = await FacebookAuth.instance.login();
-      final OAuthCredential facebookAuthCredential =
-          FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
-      FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setBool('loginOrNot', true);
-      Navigator.pushNamed(context, 'homepage');
+      if (loginResult.status == LoginStatus.success) {
+        final OAuthCredential facebookAuthCredential =
+        FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
+
+        // Sign in to Firebase with Facebook
+        UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
+
+        // Get the signed-in user's email
+        String? email = userCredential.user?.email;
+
+        if (email != null) {
+          // Check if the user exists in Fire store
+          QuerySnapshot query = await FirebaseFirestore.instance.collection('users').where('email', isEqualTo: email).get();
+          if (query.docs.isEmpty) {
+            // create a new user in Fire store
+            addUserDetails(userCredential.user!.displayName.toString(), email, "", "", "");
+          }
+
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          prefs.setBool('loginOrNot', true);
+
+          // Navigate to the homepage
+          Navigator.pushNamed(context, 'homepage');
+        } else {
+          print("Email not available");
+        }
+      } else {
+        print("Facebook login failed: ${loginResult.status}");
+      }
     } catch (e) {
-      print("Error with sign in facebook: $e");
+      _showErrorMessage("Error with Facebook sign in", "This email is used before by different sign in ,please sign in by the same method you signed it before");
+      print("Error with Facebook sign in: $e");
     }
+  }
+
+
+
+  Future addUserDetails(String userName, String email, String password, String phone,String profile_image) async {
+    await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).set({
+      'uid': FirebaseAuth.instance.currentUser!.uid,
+      'user_name': userName,
+      'email': email,
+      'password': password,
+      'phone_number': phone,
+      'profile_image':profile_image
+    });
   }
 
 /*
@@ -175,6 +230,7 @@ Why it's important: It prevents memory leaks by ensuring that unnecessary resour
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.email),
                   labelText: 'Email',
                   border: OutlineInputBorder(),
                 ),
@@ -198,6 +254,7 @@ Why it's important: It prevents memory leaks by ensuring that unnecessary resour
                 obscureText:
                     !passwordVisible, //This will obscure text dynamically
                 decoration: InputDecoration(
+                  prefixIcon: Icon(Icons.lock),
                   suffixIcon: IconButton(
                     icon: Icon(
                       // Based on passwordVisible state choose the icon
@@ -343,3 +400,5 @@ Why it's important: It prevents memory leaks by ensuring that unnecessary resour
     );
   }
 }
+
+//error in linking two accounts and when log in with in sign in screen remove the photo of profile

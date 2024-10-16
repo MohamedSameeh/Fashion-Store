@@ -35,11 +35,16 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
 
   Future<void> updateUserPassword() async {
     try {
+      //update the fire store
       final currentUser = FirebaseAuth.instance.currentUser;
       await FirebaseFirestore.instance
           .collection('users')
           .doc(currentUser?.uid)
           .update({'password': newPasswordController.text});
+
+      //update the password
+      User? user = FirebaseAuth.instance.currentUser;
+      await user?.updatePassword(newPasswordController.text);
 
       //show success message
       AwesomeDialog(

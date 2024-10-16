@@ -14,8 +14,8 @@ class _UserInformationPageState extends State<UserInformationPage> {
   String fullName = "";
   String email = "";
   String phone = "";
-  TextEditingController dateController = TextEditingController();
-  DateTime selectedDate = DateTime(1989, 12, 12);
+  // TextEditingController dateController = TextEditingController();
+  // DateTime selectedDate = DateTime(1989, 12, 12);
 
   Future<Map<String, dynamic>?> _fetchUserData() async {
     try {
@@ -42,30 +42,30 @@ class _UserInformationPageState extends State<UserInformationPage> {
     }
   }
 
-  @override
-  void initState() {
-    super.initState();
-    dateController.text = formatDate(selectedDate);
-  }
+  // @override
+  // void initState() {
+  //   super.initState();
+  //   dateController.text = formatDate(selectedDate);
+  // }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: selectedDate,
-      firstDate: DateTime(1900),
-      lastDate: DateTime.now(),
-    );
-    if (pickedDate != null && pickedDate != selectedDate) {
-      setState(() {
-        selectedDate = pickedDate;
-        dateController.text = formatDate(selectedDate);
-      });
-    }
-  }
+  // Future<void> _selectDate(BuildContext context) async {
+  //   final DateTime? pickedDate = await showDatePicker(
+  //     context: context,
+  //     initialDate: selectedDate,
+  //     firstDate: DateTime(1900),
+  //     lastDate: DateTime.now(),
+  //   );
+  //   if (pickedDate != null && pickedDate != selectedDate) {
+  //     setState(() {
+  //       selectedDate = pickedDate;
+  //       dateController.text = formatDate(selectedDate);
+  //     });
+  //   }
+  // }
 
-  String formatDate(DateTime date) {
-    return "${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}";
-  }
+  // String formatDate(DateTime date) {
+  //   return "${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}";
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -83,7 +83,13 @@ class _UserInformationPageState extends State<UserInformationPage> {
         future: _fetchUserData(),
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return Text('Loading Your Data...');
+            return Center(
+              child: Icon(
+                Icons.refresh,
+                size: 50,
+                color: Colors.red,
+              ),
+            );
           } else if (snapshot.hasError) {
             return Center(child: Text('Error loading user data'));
           } else {
@@ -94,74 +100,95 @@ class _UserInformationPageState extends State<UserInformationPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Personal Information',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Text('Name: ',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text(fullName,
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.normal)),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Text('Email: ',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text(email,
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.normal)),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Text('Phone Number: ',
-                            style: TextStyle(
-                                fontSize: 18, fontWeight: FontWeight.bold)),
-                        Text(phone,
-                            style: TextStyle(
-                                fontSize: 16, fontWeight: FontWeight.normal)),
-                      ],
-                    ),
-                    SizedBox(height: 20),
-                    GestureDetector(
-                      onTap: () {
-                        // _selectDate(context);
-                      },
-                      child: AbsorbPointer(
-                        child: TextField(
-                          controller: dateController,
-                          decoration:
-                              InputDecoration(labelText: 'Date of Birth'),
-                        ),
+                    Text(
+                      'Personal Information :',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.black,
                       ),
                     ),
-                    SizedBox(height: 30),
+                    SizedBox(height: 40),
+                    Row(
+                      children: [
+                        Text(
+                          'Name: ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Text(
+                          fullName,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Text(
+                          'Email: ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Text(
+                          email,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 20),
+                    Row(
+                      children: [
+                        Text(
+                          'Phone Number: ',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black,
+                          ),
+                        ),
+                        Text(
+                          phone,
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.grey[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 60),
                     Container(
-                      width: 400,
+                      width: double.infinity,
                       margin: EdgeInsets.only(left: 10, right: 10, top: 50),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(50),
-                        color: Colors.red,
+                        borderRadius: BorderRadius.circular(40),
+                        color: Colors.redAccent,
                       ),
                       child: MaterialButton(
-                        minWidth: 70,
                         onPressed: () async {
-                          //go to update screen
+                          // Go to update screen
                           Navigator.pushReplacementNamed(
                               context, 'updateUserInformation');
                         },
                         child: Text(
                           'Update',
                           style: TextStyle(
-                            fontSize: 28,
+                            fontSize: 26,
                             color: Colors.white,
                           ),
                         ),

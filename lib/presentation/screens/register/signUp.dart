@@ -46,7 +46,7 @@ class _SignupScreenState extends State<SignupScreen> {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         prefs.setBool(
             'loginOrNot', true); //change the state of user login or not
-        Navigator.pushNamed(context, 'homepage');
+        Navigator.pushReplacementNamed(context, 'homepage');
       },
     ).show();
   }
@@ -64,23 +64,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
       //add user details to fire store
       addUserDetails(
-          nameController.text, emailController.text, passController.text, "");
+          nameController.text, emailController.text, passController.text, "",'');
 
-      //show success message and go to sign in screen
-      AwesomeDialog(
-        context: context,
-        dialogType: DialogType.success,
-        animType: AnimType.rightSlide,
-        title: "Success",
-        desc: "Sign Up Successfully",
-        btnCancelOnPress: () {},
-        btnOkOnPress: () async {
-          SharedPreferences prefs = await SharedPreferences.getInstance();
-          prefs.setBool(
-              'loginOrNot', true); //change the state of user login or not
-          Navigator.pushReplacementNamed(context, 'signIn');
-        },
-      ).show();
+      //show success message and go to  homepage
+      _showSuccessMessageAndGoToHome();
+
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         _showErrorMessage('The password provided is too weak.', 'Warning!!');
@@ -93,17 +81,14 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  Future addUserDetails(
-      String userName, String email, String password, String phone) async {
-    await FirebaseFirestore.instance
-        .collection('users')
-        .doc(FirebaseAuth.instance.currentUser!.uid)
-        .set({
+  Future addUserDetails(String userName, String email, String password, String phone,String profileImage) async {
+    await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).set({
       'uid': FirebaseAuth.instance.currentUser!.uid,
       'user_name': userName,
       'email': email,
       'password': password,
       'phone_number': phone,
+      'profile_image':profileImage
     });
   }
 
@@ -123,14 +108,34 @@ class _SignupScreenState extends State<SignupScreen> {
         accessToken: googleAuth?.accessToken,
         idToken: googleAuth?.idToken,
       );
+      final email = googleUser.email;
 
-      await FirebaseAuth.instance.signInWithCredential(credential);
+      // Check if the email is used before
+      List<String> signInMethods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
 
-      //show success message and go to homepage
-      _showSuccessMessageAndGoToHome();
-    } catch (e) {
+      if (signInMethods.isNotEmpty) {
+        _showErrorMessage('An account already exists with this email. Please sign in with the appropriate method.', 'Error');
+      }else{
+        await FirebaseAuth.instance.signInWithCredential(credential);
+
+        // Accessing the email after Google Sign-In
+        User? user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          String? email = user.email;
+
+          // Add user details to Firestore
+          addUserDetails(googleUser.displayName ?? '', email!, '', '','');
+        }
+
+        //show success message and go to homepage
+        _showSuccessMessageAndGoToHome();
+      }
+
+      }
+    catch (e) {
       print('Error during Google Sign-In: $e');
     }
+
   }
 
   Future signInWithFacebook() async {
@@ -138,20 +143,51 @@ class _SignupScreenState extends State<SignupScreen> {
       // Trigger the sign-in flow
       final LoginResult loginResult = await FacebookAuth.instance.login();
 
-      // Create a credential from the access token
-      final OAuthCredential facebookAuthCredential =
-          FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
+      // Check if the login was successful
+      if (loginResult.status == LoginStatus.success) {
+        // Create a credential from the access token
+        final OAuthCredential facebookAuthCredential = FacebookAuthProvider
+            .credential(loginResult.accessToken!.tokenString);
 
-      // Once signed in, return the UserCredential
-      FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
+        final userData = await FacebookAuth.instance.getUserData();
+        final email = userData['email'];
 
-      //show success message and go to homepage
-      _showSuccessMessageAndGoToHome();
-    } catch (e) {
-      print("Error with sign in facebook: $e");
+        // Check if the email is used before
+        List<String> signInMethods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
+
+        if (signInMethods.isNotEmpty) {
+          _showErrorMessage(
+              'An account already exists with this email. Please sign in with the appropriate method.',
+              'Error');
+        } else {
+          // Sign in to Firebase
+          UserCredential userCredential = await FirebaseAuth.instance
+              .signInWithCredential(facebookAuthCredential);
+
+          // Access the user information after Facebook Sign-In
+          User? user = FirebaseAuth.instance.currentUser;
+          if (user != null) {
+            // Retrieve user details from Facebook
+            final userData = await FacebookAuth.instance.getUserData();
+            String name = userData['name'] ?? "";
+            String? email = user.email;
+
+            // Add user details to Fire store
+            await addUserDetails(name, email!, '', '','');
+
+            // Show success message and go to the homepage
+            _showSuccessMessageAndGoToHome();
+          } else {
+            print("Facebook login failed: ${loginResult.message}");
+          }
+        }
+      }
+    }
+    catch (e) {
+      print("Error during Facebook sign-in: $e");
+      _showErrorMessage("Error during Facebook sign-in", "Error!!");
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -188,6 +224,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 controller: nameController,
                 keyboardType: TextInputType.text,
                 decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.account_box),
                     labelText: 'Username', border: OutlineInputBorder()),
               ),
             ),
@@ -211,6 +248,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 controller: emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
+                    prefixIcon: Icon(Icons.email),
                     labelText: 'Email', border: OutlineInputBorder()),
               ),
             ),
@@ -232,6 +270,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 obscureText:
                     !passwordVisible, //This will obscure text dynamically
                 decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.lock),
                   suffixIcon: IconButton(
                     icon: Icon(
                       // Based on passwordVisible state choose the icon

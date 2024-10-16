@@ -1,9 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:depi_final_project/presentation/screens/Bag/ShippingAddressesPage.dart';
 import 'package:depi_final_project/presentation/screens/Profile/UserInformationPage.dart';
+import 'package:depi_final_project/presentation/screens/Profile/utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ProfilePage extends StatefulWidget {
@@ -18,6 +23,7 @@ class _ProfilePageState extends State<ProfilePage> {
   String searchQuery = ''; // To hold the search query
 
   String userName = "", userEmail = "";
+  Uint8List? _image;
 
   void _onItemTapped(int index) {
     setState(() {
@@ -39,6 +45,7 @@ class _ProfilePageState extends State<ProfilePage> {
         if (data != null) {
           userName = data['user_name'];
           userEmail = data['email'];
+          _image = await NetworkAssetBundle(Uri.parse(data['profile_image'])).load('').then((value) => value.buffer.asUint8List());
         } else {
           print('Document data is null');
         }
@@ -47,6 +54,41 @@ class _ProfilePageState extends State<ProfilePage> {
       }
     } catch (e) {
       print("error.............$e");
+    }
+  }
+
+  //change the photo of profile
+  void selectImage() async{
+    Uint8List img= await pickImage(ImageSource.gallery);
+    setState(() {
+      _image=img;
+    });
+    // Upload the image and get the download URL
+    String downloadUrl = await uploadImage(img);
+
+    if (downloadUrl.isNotEmpty) {
+      // Save the image URL to Firestore
+      await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser?.uid).update({
+        'profile_image': downloadUrl,
+      });
+    }
+  }
+
+  Future<String> uploadImage(Uint8List image) async {
+    try {
+      // Create a reference to Firebase Storage
+      final storageRef = FirebaseStorage.instance.ref().child('profile_images/${FirebaseAuth.instance.currentUser?.uid}.jpg');
+
+      // Upload the image
+      await storageRef.putData(image);
+
+      // Get the download URL
+      String downloadUrl = await storageRef.getDownloadURL();
+
+      return downloadUrl; // Return the download URL
+    } catch (e) {
+      print("Error uploading image: $e");
+      return '';
     }
   }
 
@@ -91,94 +133,124 @@ class _ProfilePageState extends State<ProfilePage> {
           builder: (BuildContext context,
               AsyncSnapshot<Map<String, dynamic>?> snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
-              return Text('Loading Your Data...');
+              return Center(child: Icon(Icons.refresh,size: 50, color: Colors.red));
             } else if (snapshot.hasError) {
               return Center(child: Text('Error loading user data'));
             } else {
-              return SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 40,
-                            backgroundImage:
-                                NetworkImage('https://via.placeholder.com/150'),
-                          ),
-                          SizedBox(width: 20),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                userName,
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                              Text(userEmail, style: TextStyle(fontSize: 16)),
-                            ],
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 30),
-
-                      SizedBox(height: 20),
-
-                      // List of items (filtered based on search)
-                      ...filteredItems.map((item) {
-                        return ListTile(
-                          title: Text(item['title']!),
-                          subtitle: Text(item['subtitle']!),
-                          trailing: Icon(Icons.arrow_forward_ios),
-                          onTap: () {
-                            if (item['title'] == 'Shipping addresses') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        ShippingAddressesPage()), // Navigate to ShippingAddressesPage
-                              );
-                            } else if (item['title'] == 'Settings') {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        UserInformationPage()),
-                              );
-                            }
-                          },
-                        );
-                      }).toList(),
-                      Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
+              return Stack(
+                children:[
+                  SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
                           children: [
-                            IconButton(
-                                onPressed: () async {
-                                  //sign out from google account
-                                  GoogleSignIn googleSignIn = GoogleSignIn();
-                                  googleSignIn.disconnect();
-                                  //sign out from firebase
-                                  await FirebaseAuth.instance.signOut();
+                            Stack(
+                              children:[
+                                _image!=null ? CircleAvatar(
+                                radius: 50,
+                                backgroundImage:
+                                   MemoryImage(_image!),
+                              ):
+                                CircleAvatar(
+                                  radius: 50,
+                                  backgroundImage:
+                                  NetworkImage('https://via.placeholder.com/150'),
+                                ),
+                                Positioned(
+                                    left:50,
+                                    bottom: -10,
+                                    child: IconButton(onPressed: selectImage, icon: Icon(Icons.add_a_photo)),
+                                )
+                        ],
+                            ),
 
-                                  SharedPreferences prefs =
-                                      await SharedPreferences.getInstance();
-                                  prefs.setBool('loginOrNot',
-                                      false); //change the state of user login or not
+                            SizedBox(width: 20),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  userName,
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(userEmail, style: TextStyle(fontSize: 16)),
+                              ],
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 30),
 
-                                  Navigator.pushReplacementNamed(
-                                      context, 'signIn');
-                                },
-                                icon: Icon(Icons.exit_to_app)),
-                          ])
-                    ],
+                        SizedBox(height: 20),
+
+                        // List of items (filtered based on search)
+                        ...filteredItems.map((item) {
+                          return ListTile(
+                            title: Text(item['title']!),
+                            subtitle: Text(item['subtitle']!),
+                            trailing: Icon(Icons.arrow_forward_ios),
+                            onTap: () {
+                              if (item['title'] == 'Shipping addresses') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          ShippingAddressesPage()), // Navigate to ShippingAddressesPage
+                                );
+                              } else if (item['title'] == 'Settings') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          UserInformationPage()),
+                                );
+                              }
+                            },
+                          );
+                        }).toList(),
+                        Row(
+                            children: [
+                               Positioned(
+                                 bottom:100 ,
+                                 right:80 ,
+                                 child: GestureDetector(
+                                  onTap: () async {
+                                      //sign out from google account
+                                      GoogleSignIn googleSignIn = GoogleSignIn();
+                                      googleSignIn.disconnect();
+
+                                      await FacebookAuth.instance.logOut();
+
+                                      //sign out from firebase
+                                      await FirebaseAuth.instance.signOut();
+
+                                      SharedPreferences prefs =
+                                          await SharedPreferences.getInstance();
+                                      prefs.setBool('loginOrNot',
+                                          false); //change the state of user login or not
+
+                                      Navigator.pushReplacementNamed(
+                                          context, 'signIn');
+                                 },
+                                 child: Image.asset(
+                                       'assets/images/logout.png',
+                                         width: 40,
+                                        height: 40,
+                                                             ),
+                                 ),
+                               ),
+                            ])
+                      ],
+                    ),
                   ),
                 ),
+            ],
               );
             }
           }),
