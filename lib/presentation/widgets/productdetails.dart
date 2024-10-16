@@ -54,7 +54,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
     final snapshot = await favoriteRef.get();
     setState(() {
-      isFavorite = snapshot.exists; // تحديث الحالة عند تحميل الصفحة
+      isFavorite = snapshot.exists;
     });
   }
 
@@ -72,14 +72,18 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.product.name),
+        backgroundColor: Colors.white,
+        elevation: 2,
+        title: Text(widget.product.name,
+            style: const TextStyle(
+                color: Colors.black, fontWeight: FontWeight.bold)),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.share),
+            icon: const Icon(Icons.share, color: Colors.black),
             onPressed: shareProduct,
           ),
         ],
@@ -129,7 +133,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           _buildSizeAndColorDropdowns(),
           const SizedBox(height: 10),
           Text(widget.product.description,
-              style: const TextStyle(color: Colors.grey)),
+              style: const TextStyle(color: Colors.grey, fontSize: 16)),
           const SizedBox(height: 20),
           _buildAddToCartButton(cartRef),
           const SizedBox(height: 20),
@@ -147,7 +151,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         Expanded(
           child: Text(widget.product.name,
               style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 24)),
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 26)),
         ),
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
@@ -157,11 +161,12 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                   style: const TextStyle(
                       color: Colors.redAccent,
                       fontWeight: FontWeight.bold,
-                      fontSize: 24)),
+                      fontSize: 22)),
             Text('\$${widget.product.price.toStringAsFixed(2)}',
                 style: const TextStyle(
                     decoration: TextDecoration.lineThrough,
-                    color: Colors.grey)),
+                    color: Colors.grey,
+                    fontSize: 16)),
           ],
         ),
       ],
@@ -185,7 +190,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
         IconButton(
           icon: Icon(
             isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: isFavorite ? Colors.red : null,
+            color: isFavorite ? Colors.red : Colors.grey,
           ),
           onPressed: () async {
             final userId = FirebaseAuth.instance.currentUser!.uid;
@@ -232,7 +237,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
     ValueChanged<String?> onChanged,
   ) {
     return DropdownButton<String>(
-      hint: Text(hint),
+      hint: Text(hint, style: const TextStyle(fontSize: 16)),
       value: selectedItem,
       onChanged: onChanged,
       items: items.map<DropdownMenuItem<String>>((String value) {
@@ -277,7 +282,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
                 ),
                 onPressed: () {},
                 child: const Text("Already in Cart",
-                    style: TextStyle(color: Colors.white)),
+                    style: TextStyle(color: Colors.white, fontSize: 18)),
               ));
         }
       },

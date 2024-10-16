@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class FavoriteScreen extends StatefulWidget {
   const FavoriteScreen({super.key});
@@ -22,10 +23,32 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Favorites'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF4A4A4A), Colors.brown],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+        ),
+        title: const Text(
+          'Favorites',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
+        ),
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(isGridView ? Icons.list : Icons.grid_view),
+            icon: Icon(
+              isGridView ? Icons.list : Icons.grid_view,
+              color: Colors.white,
+            ),
             onPressed: () {
               setState(() {
                 isGridView = !isGridView;
@@ -48,75 +71,162 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
           final favoriteItems = snapshot.data?.docs ?? [];
 
           if (favoriteItems.isEmpty) {
-            return const Center(child: Text('No favorites added'));
+            return const Center(
+              child: Text(
+                'No favorites added',
+                style: TextStyle(
+                  fontSize: 18,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            );
           }
 
-          return isGridView
-              ? buildGridView(favoriteItems)
-              : buildListView(favoriteItems);
+          return Padding(
+            padding: const EdgeInsets.all(12.0),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: isGridView
+                  ? buildGridView(favoriteItems)
+                  : buildListView(favoriteItems),
+            ),
+          );
         },
       ),
     );
   }
 
+  // Build List View Layout
   Widget buildListView(List<QueryDocumentSnapshot> favoriteItems) {
     return ListView.builder(
       itemCount: favoriteItems.length,
       itemBuilder: (context, index) {
         final item = favoriteItems[index];
-        return ListTile(
-          leading: Image.network(item['image'], width: 50, height: 50),
-          title: Text(item['name']),
-          subtitle: Text('\$${item['price']}'),
-          trailing: IconButton(
-            icon: const Icon(Icons.favorite, color: Colors.red),
-            onPressed: () async {
-              await item.reference.delete();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Removed from favorites')),
-              );
-            },
+        return Card(
+          elevation: 5,
+          margin: const EdgeInsets.symmetric(vertical: 10.0),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          shadowColor: Colors.grey.withOpacity(0.4),
+          child: ListTile(
+            contentPadding: const EdgeInsets.all(15.0),
+            leading: ClipRRect(
+              borderRadius: BorderRadius.circular(10.0),
+              child: CachedNetworkImage(
+                imageUrl: item['image'],
+                placeholder: (context, url) =>
+                    const CircularProgressIndicator(),
+                errorWidget: (context, url, error) => const Icon(Icons.error),
+                width: 60,
+                height: 60,
+                fit: BoxFit.cover,
+              ),
+            ),
+            title: Text(
+              item['name'],
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+                color: Color(0xFF333333),
+              ),
+            ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 5),
+              child: Text(
+                '\$${item['price']}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: Colors.green,
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            trailing: IconButton(
+              icon: const Icon(Icons.favorite, color: Colors.redAccent),
+              onPressed: () async {
+                await showRemoveConfirmation(context, item);
+              },
+            ),
           ),
         );
       },
     );
   }
 
+  // Build Grid View Layout
   Widget buildGridView(List<QueryDocumentSnapshot> favoriteItems) {
     return GridView.builder(
       itemCount: favoriteItems.length,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         childAspectRatio: 2 / 3,
-        crossAxisSpacing: 10,
-        mainAxisSpacing: 10,
+        crossAxisSpacing: 15,
+        mainAxisSpacing: 15,
       ),
       itemBuilder: (context, index) {
         final item = favoriteItems[index];
         return Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          shadowColor: Colors.grey.withOpacity(0.3),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Image.network(item['image'], fit: BoxFit.cover),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(12),
+                  ),
+                  child: CachedNetworkImage(
+                    imageUrl: item['image'],
+                    placeholder: (context, url) =>
+                        const Center(child: CircularProgressIndicator()),
+                    errorWidget: (context, url, error) =>
+                        const Icon(Icons.error),
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                  ),
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.all(8.0),
-                child: Text(item['name'], style: const TextStyle(fontSize: 16)),
+                child: Text(
+                  item['name'],
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF4A4A4A),
+                  ),
+                ),
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: Text('\$${item['price']}',
-                    style: const TextStyle(color: Colors.grey)),
+                child: Text(
+                  '\$${item['price']}',
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
               ),
-              IconButton(
-                icon: const Icon(Icons.favorite, color: Colors.red),
-                onPressed: () async {
-                  await item.reference.delete();
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Removed from favorites')),
-                  );
-                },
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.favorite, color: Colors.redAccent),
+                      onPressed: () async {
+                        await showRemoveConfirmation(context, item);
+                      },
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -124,136 +234,46 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
       },
     );
   }
+
+  // Show remove confirmation dialog
+  Future<void> showRemoveConfirmation(
+      BuildContext context, QueryDocumentSnapshot item) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: Colors.white,
+          title: const Text("Remove Favorite",
+              style: TextStyle(color: Colors.black)),
+          content: const Text(
+            "Are you sure you want to remove this item?",
+            style: TextStyle(color: Colors.black54),
+          ),
+          actions: [
+            TextButton(
+              child: const Text("Cancel", style: TextStyle(color: Colors.grey)),
+              onPressed: () {
+                Navigator.of(context).pop(false);
+              },
+            ),
+            TextButton(
+              child: const Text("Remove",
+                  style: TextStyle(color: Colors.redAccent)),
+              onPressed: () async {
+                await item.reference.delete();
+                Navigator.of(context).pop(true);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Item removed from favorites')),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      await item.reference.delete();
+    }
+  }
 }
-// import 'package:flutter/material.dart';
-
-// class FavoriteScreen extends StatefulWidget {
-//   const FavoriteScreen({super.key});
-
-//   @override
-//   State<FavoriteScreen> createState() => _FavoriteScreenState();
-// }
-
-// class _FavoriteScreenState extends State<FavoriteScreen> {
-//   bool isGridView = false; // To toggle between list and grid
-//   List<String> favoriteItems = []; // To store favorite items
-
-//   // Sample data
-//   List<Map<String, String>> items = [
-//     {'name': 'Shirt', 'price': '32\$', 'image': 'assets/images/8.jpeg'},
-//     {'name': 'Longsleeve Violeta', 'price': '46\$', 'image': 'assets/images/10.jpg'},
-//     {'name': 'T-Shirt', 'price': '25\$', 'image': 'assets/images/11.jpg'},
-//   ];
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: Text('Favorites'),
-//         actions: [
-//           IconButton(
-//             icon: Icon(isGridView ? Icons.list : Icons.grid_view),
-//             onPressed: () {
-//               setState(() {
-//                 isGridView = !isGridView;
-//               });
-//             },
-//           ),
-//         ],
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(8.0),
-//         child: Column(
-//           children: [
-//             Row(
-//               children: [
-//                 FilterChip(label: Text('Summer'), onSelected: (_) {}),
-//                 SizedBox(width: 8),
-//                 FilterChip(label: Text('T-Shirts'), onSelected: (_) {}),
-//                 SizedBox(width: 8),
-//                 FilterChip(label: Text('Shirts'), onSelected: (_) {}),
-//               ],
-//             ),
-//             Divider(),
-//             Expanded(
-//               child: isGridView ? buildGridView() : buildListView(),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   // Build the list view layout
-//   Widget buildListView() {
-//     return ListView.builder(
-//       itemCount: items.length,
-//       itemBuilder: (context, index) {
-//         return ListTile(
-//           leading: Image.asset(items[index]['image']!, width: 50, height: 50),
-//           title: Text(items[index]['name']!),
-//           subtitle: Text(items[index]['price']!),
-//           trailing: IconButton(
-//             icon: Icon(
-//               favoriteItems.contains(items[index]['name'])
-//                   ? Icons.favorite
-//                   : Icons.favorite_border,
-//             ),
-//             onPressed: () {
-//               setState(() {
-//                 if (favoriteItems.contains(items[index]['name'])) {
-//                   favoriteItems.remove(items[index]['name']);
-//                 } else {
-//                   favoriteItems.add(items[index]['name']!);
-//                 }
-//               });
-//             },
-//           ),
-//         );
-//       },
-//     );
-//   }
-
-//   // Build the grid view layout
-//   Widget buildGridView() {
-//     return GridView.builder(
-//       itemCount: items.length,
-//       gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-//         crossAxisCount: 2,
-//         childAspectRatio: 2 / 3,
-//         crossAxisSpacing: 10,
-//         mainAxisSpacing: 10,
-//       ),
-//       itemBuilder: (context, index) {
-//         return GridTile(
-//           footer: GridTileBar(
-//             backgroundColor: Colors.black54,
-//             title: Text(items[index]['name']!),
-//             subtitle: Text(items[index]['price']!),
-//             trailing: IconButton(
-//               icon: Icon(
-//                 favoriteItems.contains(items[index]['name'])
-//                     ? Icons.favorite
-//                     : Icons.favorite_border,
-//                 color: Colors.red,
-//               ),
-//               onPressed: () {
-//                 setState(() {
-//                   if (favoriteItems.contains(items[index]['name'])) {
-//                     favoriteItems.remove(items[index]['name']);
-//                   } else {
-//                     favoriteItems.add(items[index]['name']!);
-//                   }
-//                 });
-//               },
-//             ),
-//           ),
-//           child: Image.asset(
-//             items[index]['image']!,
-//             fit: BoxFit.cover,
-//           ),
-//         );
-//       },
-//     );
-//   }
-// }
