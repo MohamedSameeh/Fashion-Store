@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:depi_final_project/main.dart';
 import 'package:depi_final_project/presentation/screens/Bag/ShippingAddressesPage.dart';
 import 'package:depi_final_project/presentation/screens/Profile/UserInformationPage.dart';
 import 'package:depi_final_project/presentation/screens/Profile/utils.dart';
@@ -10,6 +11,9 @@ import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../../add_product.dart';
+import '../order/order_page.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -45,7 +49,9 @@ class _ProfilePageState extends State<ProfilePage> {
         if (data != null) {
           userName = data['user_name'];
           userEmail = data['email'];
-          _image = await NetworkAssetBundle(Uri.parse(data['profile_image'])).load('').then((value) => value.buffer.asUint8List());
+          _image = await NetworkAssetBundle(Uri.parse(data['profile_image']))
+              .load('')
+              .then((value) => value.buffer.asUint8List());
         } else {
           print('Document data is null');
         }
@@ -58,17 +64,20 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   //change the photo of profile
-  void selectImage() async{
-    Uint8List img= await pickImage(ImageSource.gallery);
+  void selectImage() async {
+    Uint8List img = await pickImage(ImageSource.gallery);
     setState(() {
-      _image=img;
+      _image = img;
     });
     // Upload the image and get the download URL
     String downloadUrl = await uploadImage(img);
 
     if (downloadUrl.isNotEmpty) {
       // Save the image URL to Firestore
-      await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser?.uid).update({
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser?.uid)
+          .update({
         'profile_image': downloadUrl,
       });
     }
@@ -77,7 +86,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<String> uploadImage(Uint8List image) async {
     try {
       // Create a reference to Firebase Storage
-      final storageRef = FirebaseStorage.instance.ref().child('profile_images/${FirebaseAuth.instance.currentUser?.uid}.jpg');
+      final storageRef = FirebaseStorage.instance.ref().child(
+          'profile_images/${FirebaseAuth.instance.currentUser?.uid}.jpg');
 
       // Upload the image
       await storageRef.putData(image);
@@ -133,126 +143,134 @@ class _ProfilePageState extends State<ProfilePage> {
           builder: (BuildContext context,
               AsyncSnapshot<Map<String, dynamic>?> snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
-              return Center(child: Icon(Icons.refresh,size: 50, color: Colors.red));
+              return Center(
+                child: CircularProgressIndicator(
+                  color: Colors.red,
+                ),
+              );
             } else if (snapshot.hasError) {
               return Center(child: Text('Error loading user data'));
             } else {
               return Stack(
-                children:[
+                children: [
                   SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Stack(
-                              children:[
-                                _image!=null ? CircleAvatar(
-                                radius: 50,
-                                backgroundImage:
-                                   MemoryImage(_image!),
-                              ):
-                                CircleAvatar(
-                                  radius: 50,
-                                  backgroundImage:
-                                  NetworkImage('https://via.placeholder.com/150'),
-                                ),
-                                Positioned(
-                                    left:50,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Stack(
+                                children: [
+                                  _image != null
+                                      ? CircleAvatar(
+                                          radius: 50,
+                                          backgroundImage: MemoryImage(_image!),
+                                        )
+                                      : CircleAvatar(
+                                          radius: 50,
+                                          backgroundImage: NetworkImage(
+                                              'https://via.placeholder.com/150'),
+                                        ),
+                                  Positioned(
+                                    left: 50,
                                     bottom: -10,
-                                    child: IconButton(onPressed: selectImage, icon: Icon(Icons.add_a_photo)),
-                                )
-                        ],
-                            ),
+                                    child: IconButton(
+                                        onPressed: selectImage,
+                                        icon: Icon(Icons.add_a_photo)),
+                                  )
+                                ],
+                              ),
+                              SizedBox(width: 20),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    userName,
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  SizedBox(height: 4),
+                                  Text(userEmail,
+                                      style: TextStyle(fontSize: 14)),
+                                ],
+                              ),
+                            ],
+                          ),
+                          SizedBox(height: 30),
 
-                            SizedBox(width: 20),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          SizedBox(height: 20),
+
+                          // List of items (filtered based on search)
+                          ...filteredItems.map((item) {
+                            return ListTile(
+                              title: Text(item['title']!),
+                              subtitle: Text(item['subtitle']!),
+                              trailing: Icon(Icons.arrow_forward_ios),
+                              onTap: () {
+                                if (item['title'] == 'Shipping addresses') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            ShippingAddressesPage()), // Navigate to ShippingAddressesPage
+                                  );
+                                } else if (item['title'] == 'Settings') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            UserInformationPage()),
+                                  );
+                                } else if (item['title'] == 'My orders') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => MyOrdersPage()),
+                                  );
+                                }
+                              },
+                            );
+                          }).toList(),
+                          Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.center,
                               children: [
-                                Text(
-                                  userName,
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
+                                GestureDetector(
+                                  onTap: () async {
+                                    //sign out from google account
+                                    GoogleSignIn googleSignIn = GoogleSignIn();
+                                    googleSignIn.disconnect();
+
+                                    await FacebookAuth.instance.logOut();
+
+                                    //sign out from firebase
+                                    await FirebaseAuth.instance.signOut();
+
+                                    SharedPreferences prefs =
+                                        await SharedPreferences.getInstance();
+                                    prefs.setBool('loginOrNot',
+                                        false); //change the state of user login or not
+
+                                    Navigator.pushReplacementNamed(
+                                        context, 'signIn');
+                                  },
+                                  child: Image.asset(
+                                    'assets/images/logout.png',
+                                    width: 40,
+                                    height: 40,
                                   ),
                                 ),
-                                SizedBox(height: 4),
-                                Text(userEmail, style: TextStyle(fontSize: 16)),
-                              ],
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 30),
-
-                        SizedBox(height: 20),
-
-                        // List of items (filtered based on search)
-                        ...filteredItems.map((item) {
-                          return ListTile(
-                            title: Text(item['title']!),
-                            subtitle: Text(item['subtitle']!),
-                            trailing: Icon(Icons.arrow_forward_ios),
-                            onTap: () {
-                              if (item['title'] == 'Shipping addresses') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          ShippingAddressesPage()), // Navigate to ShippingAddressesPage
-                                );
-                              } else if (item['title'] == 'Settings') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          UserInformationPage()),
-                                );
-                              }
-                            },
-                          );
-                        }).toList(),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                               Positioned(
-                                 bottom:100 ,
-                                 right:80 ,
-                                 child: GestureDetector(
-                                  onTap: () async {
-                                      //sign out from google account
-                                      GoogleSignIn googleSignIn = GoogleSignIn();
-                                      googleSignIn.disconnect();
-
-                                      await FacebookAuth.instance.logOut();
-
-                                      //sign out from firebase
-                                      await FirebaseAuth.instance.signOut();
-
-                                      SharedPreferences prefs =
-                                          await SharedPreferences.getInstance();
-                                      prefs.setBool('loginOrNot',
-                                          false); //change the state of user login or not
-
-                                      Navigator.pushReplacementNamed(
-                                          context, 'signIn');
-                                 },
-                                 child: Image.asset(
-                                       'assets/images/logout.png',
-                                         width: 40,
-                                        height: 40,
-                                                             ),
-                                 ),
-                               ),
-                            ])
-                      ],
+                              ]),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-            ],
+                ],
               );
             }
           }),

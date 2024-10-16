@@ -23,7 +23,7 @@ class _KidsShoesState extends State<KidsShoes> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Men Shoes'),
+        title: Text('Kids Shoes'),
       ),
       body: Center(
         child: StreamBuilder<List<Product>>(

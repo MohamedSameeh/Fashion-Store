@@ -1,4 +1,3 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -52,6 +51,81 @@ class _BagPageState extends State<BagPage> {
   void initState() {
     super.initState();
     calculateTotalPrice();
+  }
+
+  // Function to handle the checkout
+  Future<void> handleCheckout(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        final cartSnapshot = await FirebaseFirestore.instance
+            .collection('cart')
+            .where('userid', isEqualTo: user.uid)
+            .get();
+
+        if (cartSnapshot.docs.isNotEmpty) {
+          // Create the order items
+          List<Map<String, dynamic>> orderItems = cartSnapshot.docs.map((doc) {
+            return {
+              'proname': doc['proname'],
+              'proprice': doc['proprice'],
+              'quantity': doc['quantity'],
+              'proimage': doc['proimage'],
+              'procolor': doc['procolor'],
+              'prosize': doc['prosize'],
+            };
+          }).toList();
+
+          // Ensure totalAmount is not null and has a valid value
+          double totalAmount = 0;
+          cartSnapshot.docs.forEach((doc) {
+            totalAmount += doc['proprice'] * doc['quantity'];
+          });
+
+          // Create a new order with status
+          await FirebaseFirestore.instance.collection('orders').add({
+            'userid': user.uid,
+            'orderItems': orderItems,
+            'totalAmount': totalAmount,
+            'orderDate': Timestamp.now(),
+            'status': 'Processing', // Initial status when order is placed
+          });
+
+          // Clear the cart after placing the order
+          for (var doc in cartSnapshot.docs) {
+            await FirebaseFirestore.instance
+                .collection('cart')
+                .doc(doc.id)
+                .delete();
+          }
+
+          // Reset totalAmount in UI
+          setState(() {
+            totalAmount = 0;
+          });
+
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Order placed successfully!')),
+          );
+        } else {
+          // Handle empty cart
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Your cart is empty!')),
+          );
+        }
+      } catch (e) {
+        // Handle any errors that occur during checkout
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Checkout failed: ${e.toString()}')),
+        );
+      }
+    } else {
+      // Handle user not being logged in
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You must be logged in to checkout.')),
+      );
+    }
   }
 
   @override
@@ -111,33 +185,11 @@ class _BagPageState extends State<BagPage> {
                               // Product Image
                               ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
-                                child: CachedNetworkImage(
-                                  imageUrl: item['proimage'],
-                                  imageBuilder: (context, imageProvider) =>
-                                      Container(
-                                    width: 100,
-                                    height: 120,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(12),
-                                      image: DecorationImage(
-                                        image: imageProvider,
-                                        fit: BoxFit.fill,
-                                      ),
-                                    ),
-                                  ),
-                                  placeholder: (context, url) => Container(
-                                    width: 100,
-                                    height: 120,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.red,
-                                    ),
-                                  ),
-                                  errorWidget: (context, url, error) =>
-                                      Container(
-                                    width: 100,
-                                    height: 120,
-                                    child: Icon(Icons.error),
-                                  ),
+                                child: Image.network(
+                                  item['proimage'],
+                                  width: 100,
+                                  height: 120,
+                                  fit: BoxFit.fill,
                                 ),
                               ),
                               SizedBox(width: 16),
@@ -172,7 +224,6 @@ class _BagPageState extends State<BagPage> {
                                 ),
                               ),
                               SizedBox(width: 10),
-
                               Column(
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
@@ -239,7 +290,7 @@ class _BagPageState extends State<BagPage> {
                 ),
                 SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: totalAmount > 0 ? () {} : null,
+                  onPressed: totalAmount > 0 ? () => handleCheckout(context) : null,
                   style: ElevatedButton.styleFrom(
                     padding: EdgeInsets.symmetric(vertical: 16),
                     backgroundColor: totalAmount > 0 ? Colors.red : Colors.grey,
