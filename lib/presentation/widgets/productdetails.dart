@@ -24,17 +24,38 @@ enum CartStatus {
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
   String selectedSize = 'M';
   String selectedColor = 'Black';
+  bool isFavorite = false;
 
   final List<String> sizes = ['S', 'M', 'L', 'XL'];
   final List<String> colors = ['Black', 'White', 'Red'];
 
   CartStatus cartStatus = CartStatus.notExists;
 
+  @override
+  void initState() {
+    super.initState();
+    _checkIfFavorite();
+  }
+
   void shareProduct() {
     final shareText = 'Check out this product: ${widget.product.name}\n'
         'Description: ${widget.product.description}\n'
         'Price: \$${widget.product.price}\n';
     Share.share(shareText);
+  }
+
+  Future<void> _checkIfFavorite() async {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+    final favoriteRef = FirebaseFirestore.instance
+        .collection('favorites')
+        .doc(userId)
+        .collection('userFavorites')
+        .doc(widget.product.id);
+
+    final snapshot = await favoriteRef.get();
+    setState(() {
+      isFavorite = snapshot.exists; // تحديث الحالة عند تحميل الصفحة
+    });
   }
 
   @override
@@ -162,8 +183,43 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
           });
         }),
         IconButton(
-          icon: const Icon(Icons.favorite_border),
-          onPressed: () {},
+          icon: Icon(
+            isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: isFavorite ? Colors.red : null,
+          ),
+          onPressed: () async {
+            final userId = FirebaseAuth.instance.currentUser!.uid;
+            final favoriteRef = FirebaseFirestore.instance
+                .collection('favorites')
+                .doc(userId)
+                .collection('userFavorites')
+                .doc(widget.product.id);
+
+            final snapshot = await favoriteRef.get();
+
+            if (snapshot.exists) {
+              await favoriteRef.delete();
+              setState(() {
+                isFavorite = false;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Removed from favorites')),
+              );
+            } else {
+              await favoriteRef.set({
+                'id': widget.product.id,
+                'name': widget.product.name,
+                'price': widget.product.price,
+                'image': widget.product.images[0],
+              });
+              setState(() {
+                isFavorite = true;
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Added to favorites')),
+              );
+            }
+          },
         ),
       ],
     );

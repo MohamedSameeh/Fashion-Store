@@ -1,13 +1,49 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product_model.dart';
 
-class HomepageNewSale extends StatelessWidget {
+class HomepageNewSale extends StatefulWidget {
+  // تحويل إلى StatefulWidget
   final List<Product> products;
   final String type;
 
   HomepageNewSale({required this.products, required this.type});
+
+  @override
+  _HomepageNewSaleState createState() => _HomepageNewSaleState();
+}
+
+class _HomepageNewSaleState extends State<HomepageNewSale> {
+  late List<bool> isFavorite; // قائمة لتتبع حالة المفضلة
+
+  @override
+  void initState() {
+    super.initState();
+    isFavorite =
+        List.generate(widget.products.length, (_) => false); // تهيئة القائمة
+    _checkFavorites(); // التحقق من حالة المفضلة
+  }
+
+  Future<void> _checkFavorites() async {
+    final userId = FirebaseAuth.instance.currentUser!.uid;
+
+    for (int index = 0; index < widget.products.length; index++) {
+      final favoriteRef = FirebaseFirestore.instance
+          .collection('favorites')
+          .doc(userId)
+          .collection('userFavorites')
+          .doc(widget.products[index].id);
+
+      final snapshot = await favoriteRef.get();
+      if (snapshot.exists) {
+        setState(() {
+          isFavorite[index] = true; // تحديث حالة المفضلة
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,10 +51,10 @@ class HomepageNewSale extends StatelessWidget {
       width: double.infinity,
       height: 300,
       child: ListView.builder(
-        itemCount: products.length,
+        itemCount: widget.products.length,
         scrollDirection: Axis.horizontal,
         itemBuilder: (context, index) {
-          Product product = products[index];
+          Product product = widget.products[index];
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -43,7 +79,7 @@ class HomepageNewSale extends StatelessWidget {
                         width: 180,
                         height: 180,
                       ),
-                      if (type == 'Sale')
+                      if (widget.type == 'Sale')
                         Container(
                           margin: EdgeInsets.all(9),
                           width: 70,
@@ -63,15 +99,62 @@ class HomepageNewSale extends StatelessWidget {
                             ),
                           ),
                         ),
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                        margin: EdgeInsets.only(left: 140, top: 150),
-                        child: IconButton(
-                          onPressed: () {},
-                          icon: Icon(Icons.favorite_border),
+                      Positioned(
+                        right: 10,
+                        bottom: 10,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                          child: IconButton(
+                            icon: Icon(
+                              isFavorite[index]
+                                  ? Icons.favorite
+                                  : Icons.favorite_border,
+                              color: isFavorite[index]
+                                  ? Colors.red
+                                  : null, // تغيير اللون حسب الحالة
+                            ),
+                            onPressed: () async {
+                              final userId =
+                                  FirebaseAuth.instance.currentUser!.uid;
+                              final favoriteRef = FirebaseFirestore.instance
+                                  .collection('favorites')
+                                  .doc(userId)
+                                  .collection('userFavorites')
+                                  .doc(product.id);
+
+                              final snapshot = await favoriteRef.get();
+
+                              if (snapshot.exists) {
+                                // Remove from favorites
+                                await favoriteRef.delete();
+                                setState(() {
+                                  isFavorite[index] = false; // تحديث الحالة
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Removed from favorites')),
+                                );
+                              } else {
+                                // Add to favorites
+                                await favoriteRef.set({
+                                  'id': product.id,
+                                  'name': product.name,
+                                  'price': product.price,
+                                  'image': product.images[0],
+                                });
+                                setState(() {
+                                  isFavorite[index] = true; // تحديث الحالة
+                                });
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content: Text('Added to favorites')),
+                                );
+                              }
+                            },
+                          ),
                         ),
                       ),
                     ],
