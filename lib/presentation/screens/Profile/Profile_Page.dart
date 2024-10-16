@@ -215,6 +215,8 @@ class _ProfilePageState extends State<ProfilePage> {
                           );
                         }).toList(),
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                                Positioned(
                                  bottom:100 ,
