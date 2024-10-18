@@ -5,7 +5,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/product_model.dart';
 
 class HomepageNewSale extends StatefulWidget {
-  // تحويل إلى StatefulWidget
   final List<Product> products;
   final String type;
 
@@ -16,14 +15,14 @@ class HomepageNewSale extends StatefulWidget {
 }
 
 class _HomepageNewSaleState extends State<HomepageNewSale> {
-  late List<bool> isFavorite; // قائمة لتتبع حالة المفضلة
+  late List<bool> isFavorite;
 
   @override
   void initState() {
     super.initState();
-    isFavorite =
-        List.generate(widget.products.length, (_) => false); // تهيئة القائمة
-    _checkFavorites(); // التحقق من حالة المفضلة
+    isFavorite = List.generate(widget.products.length, (_) => false);
+
+    _checkFavorites();
   }
 
   Future<void> _checkFavorites() async {
@@ -39,7 +38,7 @@ class _HomepageNewSaleState extends State<HomepageNewSale> {
       final snapshot = await favoriteRef.get();
       if (snapshot.exists) {
         setState(() {
-          isFavorite[index] = true; // تحديث حالة المفضلة
+          isFavorite[index] = true;
         });
       }
     }
@@ -112,9 +111,7 @@ class _HomepageNewSaleState extends State<HomepageNewSale> {
                               isFavorite[index]
                                   ? Icons.favorite
                                   : Icons.favorite_border,
-                              color: isFavorite[index]
-                                  ? Colors.red
-                                  : null, // تغيير اللون حسب الحالة
+                              color: isFavorite[index] ? Colors.red : null,
                             ),
                             onPressed: () async {
                               final userId =

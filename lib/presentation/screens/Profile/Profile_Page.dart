@@ -27,9 +27,8 @@ class ProfilePage extends StatefulWidget {
 class _ProfilePageState extends State<ProfilePage> {
   String searchQuery = ''; // To hold the search query
 
-  String userName = "", userEmail = "",phone="",orders="";
+  String userName = "", userEmail = "", phone = "", orders = "";
   Uint8List? _image;
-
 
   // Stream<Map<String, dynamic>> _fetchUserData() {
   //   final firebaseUser = FirebaseAuth.instance.currentUser;
@@ -63,7 +62,7 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<Map<String, dynamic>?> _fetchUserData() async {
     try {
       final firebaseUser = FirebaseAuth.instance.currentUser;
-      if(firebaseUser==null){
+      if (firebaseUser == null) {
         print('No user is logged in');
         return null;
       }
@@ -82,8 +81,9 @@ class _ProfilePageState extends State<ProfilePage> {
           // Fetch and display the saved profile image from Fire store
           String? profileImageUrl = data['profile_image'];
           if (profileImageUrl != null && profileImageUrl.isNotEmpty) {
-            _image =
-            await NetworkAssetBundle(Uri.parse(profileImageUrl)).load('').then((value) => value.buffer.asUint8List());
+            _image = await NetworkAssetBundle(Uri.parse(profileImageUrl))
+                .load('')
+                .then((value) => value.buffer.asUint8List());
           }
         } else {
           print('Document data is null');
@@ -96,25 +96,30 @@ class _ProfilePageState extends State<ProfilePage> {
     }
   }
 
-  void selectImage() async{
-    Uint8List img= await pickImage(ImageSource.gallery);
+  void selectImage() async {
+    Uint8List img = await pickImage(ImageSource.gallery);
     setState(() {
-      _image=img;
+      _image = img;
     });
     // Upload the image and get the download URL
     String downloadUrl = await uploadImage(img);
 
     if (downloadUrl.isNotEmpty) {
       // Save the image URL to Firestore
-      await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser?.uid).update({
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(FirebaseAuth.instance.currentUser?.uid)
+          .update({
         'profile_image': downloadUrl,
       });
     }
   }
+
   Future<String> uploadImage(Uint8List image) async {
     try {
       // Create a reference to Firebase Storage
-      final storageRef = FirebaseStorage.instance.ref().child('profile_images/${FirebaseAuth.instance.currentUser?.uid}.jpg');
+      final storageRef = FirebaseStorage.instance.ref().child(
+          'profile_images/${FirebaseAuth.instance.currentUser?.uid}.jpg');
 
       // Upload the image
       await storageRef.putData(image);
@@ -131,19 +136,18 @@ class _ProfilePageState extends State<ProfilePage> {
 
   @override
   Widget build(BuildContext context) {
-    // Sample data for the list tiles
     List<Map<String, String>> items = [
       {'title': 'My orders', 'subtitle': 'Already have $orders orders'},
-      {'title': 'Cart','subtitle':'see my products'},
-      {'title': 'Favorite','subtitle':'see my favorite'},
+      {'title': 'Cart', 'subtitle': 'see my products'},
+      {'title': 'Favorite', 'subtitle': 'see my favorite'},
       {'title': 'Shipping addresses', 'subtitle': '3 addresses'},
     ];
     List<Map<String, String>> setting = [
       {'title': 'Edit Profile', 'subtitle': 'edit information'},
-      {'title': 'Edit Password','subtitle':'change password'},
-      {'title': 'About US','subtitle':'Team'},
+      {'title': 'Edit Password', 'subtitle': 'change password'},
+      {'title': 'About US', 'subtitle': 'Team'},
     ];
-    // Filter the items based on the search query
+
     List<Map<String, String>> filteredItems = items
         .where((item) =>
             item['title']!.toLowerCase().contains(searchQuery.toLowerCase()))
@@ -151,7 +155,7 @@ class _ProfilePageState extends State<ProfilePage> {
 
     List<Map<String, String>> filteredItemsSetting = setting
         .where((item) =>
-        item['title']!.toLowerCase().contains(searchQuery.toLowerCase()))
+            item['title']!.toLowerCase().contains(searchQuery.toLowerCase()))
         .toList();
 
     return Scaffold(
@@ -167,8 +171,7 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
         centerTitle: true,
-        actions: [
-        ],
+        actions: [],
       ),
       body: FutureBuilder(
           future: _fetchUserData(),
@@ -189,184 +192,187 @@ class _ProfilePageState extends State<ProfilePage> {
               return Center(child: Text('Error loading user data'));
             } else {
               return Stack(
-                children:[
+                children: [
                   SingleChildScrollView(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0, vertical: 20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Stack(
-                              children:[
-                                _image!=null ? CircleAvatar(
-                                radius: 50,
-                                backgroundImage:
-                                   MemoryImage(_image!),
-                              ):
-                                CircleAvatar(
-                                  radius: 50,
-                                  backgroundImage:_image!=null?MemoryImage(_image!): AssetImage('assets/images/placeholder.png')
-                                ),
-                                Positioned(
-                                    left:50,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0, vertical: 20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Stack(
+                                children: [
+                                  _image != null
+                                      ? CircleAvatar(
+                                          radius: 50,
+                                          backgroundImage: MemoryImage(_image!),
+                                        )
+                                      : CircleAvatar(
+                                          radius: 50,
+                                          backgroundImage: _image != null
+                                              ? MemoryImage(_image!)
+                                              : AssetImage(
+                                                  'assets/images/placeholder.png')),
+                                  Positioned(
+                                    left: 50,
                                     bottom: -10,
-                                    child: IconButton(onPressed: selectImage, icon: Icon(Icons.add_a_photo)),
-                                )
-                        ],
-                            ),
-
-                            SizedBox(width: 20),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  userName,
-                                  style: TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
+                                    child: IconButton(
+                                        onPressed: selectImage,
+                                        icon: Icon(Icons.add_a_photo)),
+                                  )
+                                ],
+                              ),
+                              SizedBox(width: 18),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    userName,
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
-                                ),
-                                SizedBox(height: 4),
-                                Text(userEmail, style: TextStyle(fontSize: 16)),
-                              ],
-                            ),
-                          ],
-                        ),
-                        SizedBox(height: 50),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children:[
-                            Text('Account Info',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black,
-                            ),
+                                  SizedBox(height: 4),
+                                  Text(userEmail,
+                                      style: TextStyle(fontSize: 14)),
+                                ],
+                              ),
+                            ],
                           ),
-                          ]
-                        ),
-                        SizedBox(height: 10),
-
-                       // List of items (filtered based on search)
-                        ...filteredItems.map((item) {
-                          return ListTile(
-                            title: Text(item['title']!),
-                            subtitle: Text(item['subtitle']!),
-                            trailing: Icon(Icons.arrow_forward_ios,color: Colors.red,),
-                            onTap: () {
-                              if (item['title'] == 'My orders') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          MyOrdersPage()),
-                                );
-                              }
-                                else if (item['title'] == 'Cart') {
-                                Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                builder: (context) =>
-                                BagPage()),
-                                );
-                                }
-                              else if (item['title'] == 'Favorite') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          FavoriteScreen()),
-                                );
-                              }
-                              else if(item['title'] == 'Shipping addresses') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          ShippingAddressesPage()), // Navigate to ShippingAddressesPage
-                                );
-                              }
-
-                            },
-                          );
-                        }).toList(),
-                        SizedBox(height: 20),
-
-                        Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children:[
-                              Text('Account Setting',
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
+                          SizedBox(height: 50),
+                          Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Divider(
+                                  indent: 5,
                                   color: Colors.black,
                                 ),
+                                Text(
+                                  'Account Info',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                                Divider()
+                              ]),
+                          SizedBox(height: 10),
+                          ...filteredItems.map((item) {
+                            return ListTile(
+                              title: Text(item['title']!),
+                              subtitle: Text(item['subtitle']!),
+                              trailing: Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.red,
                               ),
-                            ]
-                        ),
-
-                        ...filteredItemsSetting.map((item) {
-                          return ListTile(
-                            title: Text(item['title']!),
-                            subtitle: Text(item['subtitle']!),
-                            trailing: Icon(Icons.arrow_forward_ios,color: Colors.red,),
-                            onTap: () {
-                              if (item['title'] == 'Edit Profile') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                         UpdateUserInformationPage()),
-                                );
-                              }
-                              else if (item['title'] == 'Edit Password') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          ForgotpasswordScreen()),
-                                );
-                              }
-                              else if (item['title'] == 'About US') {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          AboutUS()),
-                                );
-                              }
-                            },
-                          );
-                        }).toList(),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 30),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              GestureDetector(
-                                onTap: () {
-                                  // Navigate to forgotPassword.dart page using MaterialPageRoute
+                              onTap: () {
+                                if (item['title'] == 'My orders') {
                                   Navigator.push(
                                     context,
                                     MaterialPageRoute(
-                                      builder: (context) =>SigninScreen(),
-                                    ),
+                                        builder: (context) => MyOrdersPage()),
                                   );
-                                },
-                                child: Text('Log out',
-                                    style: TextStyle(color: Colors.red,fontSize: 18)),
-                              )
-                            ],
+                                } else if (item['title'] == 'Cart') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => BagPage()),
+                                  );
+                                } else if (item['title'] == 'Favorite') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => FavoriteScreen()),
+                                  );
+                                } else if (item['title'] ==
+                                    'Shipping addresses') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            ShippingAddressesPage()),
+                                  );
+                                }
+                              },
+                            );
+                          }).toList(),
+                          SizedBox(height: 20),
+                          Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  'Account Setting',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              ]),
+                          ...filteredItemsSetting.map((item) {
+                            return ListTile(
+                              title: Text(item['title']!),
+                              subtitle: Text(item['subtitle']!),
+                              trailing: Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.red,
+                              ),
+                              onTap: () {
+                                if (item['title'] == 'Edit Profile') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            UpdateUserInformationPage()),
+                                  );
+                                } else if (item['title'] == 'Edit Password') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) =>
+                                            ForgotpasswordScreen()),
+                                  );
+                                } else if (item['title'] == 'About US') {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                        builder: (context) => AboutUS()),
+                                  );
+                                }
+                              },
+                            );
+                          }).toList(),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 30),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                GestureDetector(
+                                  onTap: () {
+                                    // Navigate to forgotPassword.dart page using MaterialPageRoute
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => SigninScreen(),
+                                      ),
+                                    );
+                                  },
+                                  child: Text('Log out',
+                                      style: TextStyle(
+                                          color: Colors.red, fontSize: 18)),
+                                )
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
-                ),
-            ],
+                ],
               );
             }
           }),
