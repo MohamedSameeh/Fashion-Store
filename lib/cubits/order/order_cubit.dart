@@ -1,11 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:depi_final_project/cubits/order_state.dart';
+import 'package:depi_final_project/cubits/order/order_state.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-// Order State
-
-// Order Cubit
 class OrderCubit extends Cubit<OrderState> {
   OrderCubit() : super(OrderInitial());
 

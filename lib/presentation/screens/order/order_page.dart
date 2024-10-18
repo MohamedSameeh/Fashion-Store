@@ -1,10 +1,10 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:depi_final_project/presentation/screens/order/order_card.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../cubits/order_cubit.dart';
-import '../../../cubits/order_state.dart';
+import '../../../cubits/order/order_cubit.dart';
+
+import '../../../cubits/order/order_state.dart';
 
 class MyOrdersPage extends StatelessWidget {
   const MyOrdersPage({super.key});
@@ -45,7 +45,7 @@ class MyOrdersPage extends StatelessWidget {
                 },
               );
             }
-            return const SizedBox(); // Default case
+            return const SizedBox();
           },
         ),
       ),

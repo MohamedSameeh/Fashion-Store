@@ -199,7 +199,7 @@ class BagPage extends StatelessWidget {
                 ],
               );
             }
-            return Container(); // Fallback UI
+            return Container();
           },
         ),
       ),

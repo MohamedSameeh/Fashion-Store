@@ -97,7 +97,6 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     );
   }
 
-  // Build List View Layout
   Widget buildListView(List<QueryDocumentSnapshot> favoriteItems) {
     return ListView.builder(
       itemCount: favoriteItems.length,
@@ -155,7 +154,6 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     );
   }
 
-  // Build Grid View Layout
   Widget buildGridView(List<QueryDocumentSnapshot> favoriteItems) {
     return GridView.builder(
       itemCount: favoriteItems.length,
