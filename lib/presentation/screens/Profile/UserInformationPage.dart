@@ -14,8 +14,7 @@ class _UserInformationPageState extends State<UserInformationPage> {
   String fullName = "";
   String email = "";
   String phone = "";
-  // TextEditingController dateController = TextEditingController();
-  // DateTime selectedDate = DateTime(1989, 12, 12);
+
 
   Future<Map<String, dynamic>?> _fetchUserData() async {
     try {
@@ -42,30 +41,6 @@ class _UserInformationPageState extends State<UserInformationPage> {
     }
   }
 
-  // @override
-  // void initState() {
-  //   super.initState();
-  //   dateController.text = formatDate(selectedDate);
-  // }
-
-  // Future<void> _selectDate(BuildContext context) async {
-  //   final DateTime? pickedDate = await showDatePicker(
-  //     context: context,
-  //     initialDate: selectedDate,
-  //     firstDate: DateTime(1900),
-  //     lastDate: DateTime.now(),
-  //   );
-  //   if (pickedDate != null && pickedDate != selectedDate) {
-  //     setState(() {
-  //       selectedDate = pickedDate;
-  //       dateController.text = formatDate(selectedDate);
-  //     });
-  //   }
-  // }
-
-  // String formatDate(DateTime date) {
-  //   return "${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}";
-  // }
 
   @override
   Widget build(BuildContext context) {

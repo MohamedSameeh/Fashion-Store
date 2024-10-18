@@ -1,3 +1,4 @@
+import 'package:depi_final_project/AboutUs.dart';
 import 'package:depi_final_project/presentation/models/product_model.dart';
 import 'package:depi_final_project/presentation/screens/Profile/Profile_Page.dart';
 import 'package:depi_final_project/presentation/screens/Profile/UpdateUserInformationPage.dart';
@@ -93,8 +94,8 @@ class MyApp extends StatelessWidget {
                 'sales_view_all': (context) => SalesViewAllPage(),
                 'new_view_all': (context) => NewViewAllPage(),
                 'forgot_password': (context) => ForgotpasswordScreen(),
-                'updateUserInformation': (context) =>
-                    UpdateUserInformationPage()
+                'updateUserInformation': (context) => UpdateUserInformationPage(),
+                'aboutUS':(context)=>AboutUS()
               });
         });
   }

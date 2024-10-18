@@ -116,7 +116,7 @@ class _UpdateUserInformationPageState extends State<UpdateUserInformationPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: const Text('Update My Info'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
           onPressed: () {
@@ -128,7 +128,16 @@ class _UpdateUserInformationPageState extends State<UpdateUserInformationPage> {
         future: _fetchUserData(),
         builder: (context, snapshot) {
           if (snapshot.connectionState != ConnectionState.done) {
-            return Center(child: Icon(Icons.refresh, size: 50, color: Colors.red));
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Reloading data...'),
+                ],
+              ),
+            );
           } else if (snapshot.hasError) {
             return Center(child: Text('Error loading user data'));
           } else {
@@ -139,10 +148,6 @@ class _UpdateUserInformationPageState extends State<UpdateUserInformationPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Update Personal Information:',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
                     SizedBox(height: 20),
                     TextFormField(
                       controller: fullNameController,
@@ -163,42 +168,20 @@ class _UpdateUserInformationPageState extends State<UpdateUserInformationPage> {
                       validator: (value) => validatePhoneNumber(value!),
                     ),
                     SizedBox(height: 30),
-                  Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text('Password',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    GestureDetector(
-                      onTap: () {
-                        // Navigate to forgotPassword.dart page using MaterialPageRoute
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ForgotpasswordScreen(),
-                          ),
-                        );
-                      },
-                      child: Text('Change',
-                          style: TextStyle(color: Colors.blue)),
-                    )
-                  ],
-                ),
                     Container(
                       width: 400,
-                      margin: EdgeInsets.only(left: 10, right: 10, top: 50),
+                      margin: EdgeInsets.only(left: 10, right: 10, top: 30),
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(50),
                         color: Colors.red,
                       ),
                       child: MaterialButton(
-                        minWidth: 100,
                         onPressed: () async {
                           updateUserProfileByUid();
                         },
                         child: Text(
                           'Update',
-                          style: TextStyle(fontSize: 30, color: Colors.white),
+                          style: TextStyle(fontSize: 22, color: Colors.white),
                         ),
                       ),
                     ),

@@ -10,17 +10,27 @@ class BagPage extends StatelessWidget {
       create: (_) => CartCubit()..loadCartItems(),
       child: Scaffold(
         appBar: AppBar(
-          backgroundColor: Colors.white,
-          centerTitle: true,
+          backgroundColor: Colors.transparent,
           elevation: 0,
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFF4A4A4A), Colors.brown],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+          ),
           title: Text(
             'My Bag',
             style: TextStyle(
-              color: Colors.black,
-              fontSize: 24,
+              color: Colors.white,
+              fontSize: 22,
               fontWeight: FontWeight.bold,
             ),
           ),
+          centerTitle: true,
+
         ),
         body: BlocBuilder<CartCubit, CartState>(
           builder: (context, state) {

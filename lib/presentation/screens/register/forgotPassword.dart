@@ -75,7 +75,7 @@ class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
               Container(
                   margin: EdgeInsets.only(top: 10, left: 10),
                   child: Text(
-                    isEmailSend ? "Set New Password" : "Forgot Password",
+                    isEmailSend ? "Set New Password" : "Change Password",
                     style: TextStyle(
                         fontSize: 35.sp,
                         fontWeight: FontWeight.bold,
