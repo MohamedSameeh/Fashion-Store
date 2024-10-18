@@ -44,7 +44,7 @@ class CartCubit extends Cubit<CartState> {
         await _firestore.collection('cart').doc(doc.id).update({
           'quantity': newQuantity,
         });
-        loadCartItems(); // Reload cart after updating quantity
+        loadCartItems();
       } catch (e) {
         emit(CartError(message: 'Failed to update quantity: ${e.toString()}'));
       }
@@ -55,7 +55,7 @@ class CartCubit extends Cubit<CartState> {
   void deleteItem(DocumentSnapshot doc) async {
     try {
       await _firestore.collection('cart').doc(doc.id).delete();
-      loadCartItems(); // Reload cart after deletion
+      loadCartItems();
     } catch (e) {
       emit(CartError(message: 'Failed to delete item: ${e.toString()}'));
     }
