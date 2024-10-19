@@ -34,7 +34,7 @@ class _SignupScreenState extends State<SignupScreen> {
     ).show();
   }
 
-  void _showSuccessMessageAndGoToHome() {
+  void _showSuccessMessageAndGoToLogin() {
     AwesomeDialog(
       context: context,
       dialogType: DialogType.success,
@@ -43,10 +43,7 @@ class _SignupScreenState extends State<SignupScreen> {
       desc: "Sign Up Successfully",
       btnCancelOnPress: () {},
       btnOkOnPress: () async {
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        prefs.setBool(
-            'loginOrNot', true); //change the state of user login or not
-        Navigator.pushReplacementNamed(context, 'homepage');
+        Navigator.pushReplacementNamed(context, 'signIn');
       },
     ).show();
   }
@@ -67,7 +64,7 @@ class _SignupScreenState extends State<SignupScreen> {
           nameController.text, emailController.text, passController.text, "",'');
 
       //show success message and go to  homepage
-      _showSuccessMessageAndGoToHome();
+      _showSuccessMessageAndGoToLogin();
 
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
@@ -128,7 +125,7 @@ class _SignupScreenState extends State<SignupScreen> {
         }
 
         //show success message and go to homepage
-        _showSuccessMessageAndGoToHome();
+        _showSuccessMessageAndGoToLogin();
       }
 
       }
@@ -176,7 +173,7 @@ class _SignupScreenState extends State<SignupScreen> {
             await addUserDetails(name, email!, '', '','');
 
             // Show success message and go to the homepage
-            _showSuccessMessageAndGoToHome();
+            _showSuccessMessageAndGoToLogin();
           } else {
             print("Facebook login failed: ${loginResult.message}");
           }

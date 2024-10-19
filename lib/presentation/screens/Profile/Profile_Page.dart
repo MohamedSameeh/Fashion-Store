@@ -81,6 +81,7 @@ class _ProfilePageState extends State<ProfilePage> {
           // Fetch and display the saved profile image from Fire store
           String? profileImageUrl = data['profile_image'];
           if (profileImageUrl != null && profileImageUrl.isNotEmpty) {
+            print('found image....');
             _image = await NetworkAssetBundle(Uri.parse(profileImageUrl))
                 .load('')
                 .then((value) => value.buffer.asUint8List());
@@ -211,10 +212,7 @@ class _ProfilePageState extends State<ProfilePage> {
                                         )
                                       : CircleAvatar(
                                           radius: 50,
-                                          backgroundImage: _image != null
-                                              ? MemoryImage(_image!)
-                                              : AssetImage(
-                                                  'assets/images/placeholder.png')),
+                                          backgroundImage: _image != null ? MemoryImage(_image!) : AssetImage('assets/images/placeholder.png')),
                                   Positioned(
                                     left: 50,
                                     bottom: -10,
