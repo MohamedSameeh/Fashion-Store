@@ -51,11 +51,27 @@ class CartCubit extends Cubit<CartState> {
     }
   }
 
-  // Delete Item from Cart
+  // Delete Item
   void deleteItem(DocumentSnapshot doc) async {
     try {
+      // Delete the item from Firestore
       await _firestore.collection('cart').doc(doc.id).delete();
-      loadCartItems();
+
+      if (state is CartLoaded) {
+        final currentState = state as CartLoaded;
+        final updatedCartItems =
+            List<DocumentSnapshot>.from(currentState.cartItems);
+
+        updatedCartItems.removeWhere((item) => item.id == doc.id);
+
+        double newTotalAmount = 0;
+        for (var item in updatedCartItems) {
+          newTotalAmount += item['proprice'] * item['quantity'];
+        }
+
+        emit(CartLoaded(
+            cartItems: updatedCartItems, totalAmount: newTotalAmount));
+      }
     } catch (e) {
       emit(CartError(message: 'Failed to delete item: ${e.toString()}'));
     }
