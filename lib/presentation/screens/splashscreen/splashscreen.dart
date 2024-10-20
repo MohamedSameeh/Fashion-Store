@@ -13,7 +13,8 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     Timer(Duration(seconds: 2), () async {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-       prefs.setBool('isFirstTime',false); //change the state of onboarding screen
+      prefs.setBool(
+          'isFirstTime', false); //change the state of onboarding screen
       Navigator.pushReplacementNamed(context, 'onBoarding');
     });
   }
@@ -26,7 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Image.asset(
-              'assets/images/splashscreenlogo.png', 
+              'assets/images/lo.jpg',
               width: 450,
               height: 450,
             ),
