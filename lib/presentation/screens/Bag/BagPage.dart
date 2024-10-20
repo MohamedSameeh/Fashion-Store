@@ -30,7 +30,6 @@ class BagPage extends StatelessWidget {
             ),
           ),
           centerTitle: true,
-
         ),
         body: BlocBuilder<CartCubit, CartState>(
           builder: (context, state) {
@@ -184,7 +183,16 @@ class BagPage extends StatelessWidget {
                         SizedBox(height: 16),
                         ElevatedButton(
                           onPressed: state.totalAmount > 0
-                              ? () => context.read<CartCubit>().handleCheckout()
+                              ? () {
+                                  context.read<CartCubit>().handleCheckout();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content:
+                                          Text('Your order has been placed'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                }
                               : null,
                           style: ElevatedButton.styleFrom(
                             padding: EdgeInsets.symmetric(vertical: 16),
