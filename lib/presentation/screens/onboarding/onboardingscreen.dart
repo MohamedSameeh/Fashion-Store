@@ -20,13 +20,13 @@ class _OnboardingscreenState extends State<Onboardingscreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           PageView(
             controller: _pageController,
             onPageChanged: onPageChanged,
             children: [
-              
               Column(
                 children: [
                   SizedBox(height: 100),
@@ -44,13 +44,12 @@ class _OnboardingscreenState extends State<Onboardingscreen> {
                     'Discover clothes that match your style perfectly from casual to formal, find handpicked selections just for you',
                     style: TextStyle(
                         fontSize: 20,
-                        fontWeight: FontWeight.normal,
+                        fontWeight: FontWeight.w400,
                         color: Colors.grey),
                     textAlign: TextAlign.center,
                   ),
                 ],
               ),
-              
               Column(
                 children: [
                   SizedBox(height: 100),
@@ -73,7 +72,6 @@ class _OnboardingscreenState extends State<Onboardingscreen> {
                   ),
                 ],
               ),
-              
               Column(
                 children: [
                   SizedBox(height: 205),
@@ -99,13 +97,11 @@ class _OnboardingscreenState extends State<Onboardingscreen> {
               ),
             ],
           ),
-          
           Positioned(
             top: 50,
             right: 20,
             child: TextButton(
               onPressed: () {
-                
                 Navigator.pushReplacementNamed(context, 'signIn');
               },
               child: Text(
@@ -114,7 +110,6 @@ class _OnboardingscreenState extends State<Onboardingscreen> {
               ),
             ),
           ),
-          
           Positioned(
             bottom: 30,
             left: 20,
@@ -144,7 +139,6 @@ class _OnboardingscreenState extends State<Onboardingscreen> {
                           duration: Duration(milliseconds: 300),
                           curve: Curves.ease);
                     } else {
-                      
                       Navigator.pushReplacementNamed(context, 'signIn');
                     }
                   },

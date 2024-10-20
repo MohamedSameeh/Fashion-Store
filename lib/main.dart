@@ -94,8 +94,9 @@ class MyApp extends StatelessWidget {
                 'sales_view_all': (context) => SalesViewAllPage(),
                 'new_view_all': (context) => NewViewAllPage(),
                 'forgot_password': (context) => ForgotpasswordScreen(),
-                'updateUserInformation': (context) => UpdateUserInformationPage(),
-                'aboutUS':(context)=>AboutUS()
+                'updateUserInformation': (context) =>
+                    UpdateUserInformationPage(),
+                'aboutUS': (context) => AboutUS()
               });
         });
   }

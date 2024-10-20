@@ -23,6 +23,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         backgroundColor: Colors.transparent,
         elevation: 0,
         flexibleSpace: Container(
@@ -57,6 +58,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
           ),
         ],
       ),
+      backgroundColor: Colors.white,
       body: StreamBuilder<QuerySnapshot>(
         stream: favoritesRef.snapshots(),
         builder: (context, snapshot) {

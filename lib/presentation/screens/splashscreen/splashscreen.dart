@@ -11,28 +11,31 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
-    Timer(Duration(seconds: 2), () async {
+    Timer(Duration(seconds: 4), () async {
       SharedPreferences prefs = await SharedPreferences.getInstance();
-      prefs.setBool(
-          'isFirstTime', false); //change the state of onboarding screen
+      prefs.setBool('isFirstTime', false);
       Navigator.pushReplacementNamed(context, 'onBoarding');
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Image.asset(
-              'assets/images/lo.jpg',
-              width: 450,
-              height: 450,
-            ),
-            SizedBox(height: 20),
-          ],
+    return SafeArea(
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Image.asset(
+                'assets/images/logo-app-removebg-preview.png',
+                width: double.infinity,
+                height: 200,
+                fit: BoxFit.cover,
+              ),
+              SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );

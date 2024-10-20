@@ -34,7 +34,18 @@ class AboutUS extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('About Us')),
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        title: Text(
+          'About Us',
+          style: TextStyle(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        centerTitle: true,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -47,7 +58,7 @@ class AboutUS extends StatelessWidget {
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
                 ),
-                itemCount: teamMembers.length , // First four members
+                itemCount: teamMembers.length, // First four members
                 itemBuilder: (context, index) {
                   return Card(
                     elevation: 4,
@@ -55,7 +66,8 @@ class AboutUS extends StatelessWidget {
                       children: [
                         Expanded(
                           child: ClipRRect(
-                            borderRadius: BorderRadius.vertical(top: Radius.circular(4)),
+                            borderRadius:
+                                BorderRadius.vertical(top: Radius.circular(4)),
                             child: Image.asset(
                               teamMembers[index]['image']!,
                               fit: BoxFit.cover,
@@ -68,7 +80,8 @@ class AboutUS extends StatelessWidget {
                             children: [
                               Text(
                                 teamMembers[index]['name']!,
-                                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                                style: TextStyle(
+                                    fontWeight: FontWeight.bold, fontSize: 16),
                               ),
                               SizedBox(height: 4),
                               Text(

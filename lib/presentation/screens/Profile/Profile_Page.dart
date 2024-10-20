@@ -1,3 +1,4 @@
+import 'package:depi_final_project/add_product.dart';
 import 'package:depi_final_project/presentation/screens/Profile/utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
@@ -145,12 +146,22 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.transparent,
+        elevation: 4,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.redAccent, Colors.black54],
+              begin: Alignment.bottomRight,
+              end: Alignment.topLeft,
+            ),
+          ),
+        ),
         title: const Text(
           'My Profile',
           style: TextStyle(
-            color: Colors.black,
+            color: Colors.white,
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),
@@ -158,6 +169,7 @@ class _ProfilePageState extends State<ProfilePage> {
         centerTitle: true,
         actions: [],
       ),
+      backgroundColor: Colors.white,
       body: FutureBuilder<Map<String, dynamic>?>(
         future: _userDataFuture,
         builder: (BuildContext context,
@@ -362,6 +374,20 @@ class _ProfilePageState extends State<ProfilePage> {
                             ],
                           ),
                         ),
+                        Row(
+                          children: [
+                            IconButton(
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => AddProduct(),
+                                    ),
+                                  );
+                                },
+                                icon: Icon(Icons.settings)),
+                          ],
+                        )
                       ],
                     ),
                   ),

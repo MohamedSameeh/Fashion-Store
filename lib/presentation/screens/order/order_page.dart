@@ -16,12 +16,23 @@ class MyOrdersPage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Orders', style: TextStyle(color: Colors.black)),
+        elevation: 4,
+        flexibleSpace: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.redAccent, Colors.black54],
+              begin: Alignment.bottomRight,
+              end: Alignment.topLeft,
+            ),
+          ),
+        ),
+        title: const Text('My Orders',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.white,
         centerTitle: true,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: const IconThemeData(color: Colors.white, size: 25),
       ),
+      backgroundColor: Colors.white,
       body: BlocProvider(
         create: (_) => orderCubit,
         child: BlocBuilder<OrderCubit, OrderState>(

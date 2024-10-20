@@ -63,6 +63,7 @@ class _ShopScreenState extends State<ShopScreen>
       length: 3,
       child: Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false,
           title: Center(
               child: Text(
             'Categories',

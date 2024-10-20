@@ -80,25 +80,29 @@ class _SigninScreenState extends State<SigninScreen> {
         return; // User canceled the sign in
       }
 
-      final GoogleSignInAuthentication? googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication? googleAuth =
+          await googleUser.authentication;
       final credential = GoogleAuthProvider.credential(
         accessToken: googleAuth?.accessToken,
         idToken: googleAuth?.idToken,
       );
 
       // Sign in to Firebase with Google credentials
-      UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithCredential(credential);
 
       // Get the signed-in user's email
       String? email = userCredential.user?.email;
 
       // Check if the user exists in Fire store
-      QuerySnapshot query = await FirebaseFirestore.instance.collection('users').where('email', isEqualTo: email).get();
+      QuerySnapshot query = await FirebaseFirestore.instance
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .get();
       if (query.docs.isEmpty) {
         // create a new user in Fire store
         addUserDetails(googleUser.displayName.toString(), email!, "", "", "");
       }
-
 
       SharedPreferences prefs = await SharedPreferences.getInstance();
       prefs.setBool('loginOrNot', true);
@@ -110,27 +114,31 @@ class _SigninScreenState extends State<SigninScreen> {
     }
   }
 
-
   Future<void> signInWithFacebook() async {
     try {
-
       final LoginResult loginResult = await FacebookAuth.instance.login();
       if (loginResult.status == LoginStatus.success) {
         final OAuthCredential facebookAuthCredential =
-        FacebookAuthProvider.credential(loginResult.accessToken!.tokenString);
+            FacebookAuthProvider.credential(
+                loginResult.accessToken!.tokenString);
 
         // Sign in to Firebase with Facebook
-        UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(facebookAuthCredential);
+        UserCredential userCredential = await FirebaseAuth.instance
+            .signInWithCredential(facebookAuthCredential);
 
         // Get the signed-in user's email
         String? email = userCredential.user?.email;
 
         if (email != null) {
           // Check if the user exists in Fire store
-          QuerySnapshot query = await FirebaseFirestore.instance.collection('users').where('email', isEqualTo: email).get();
+          QuerySnapshot query = await FirebaseFirestore.instance
+              .collection('users')
+              .where('email', isEqualTo: email)
+              .get();
           if (query.docs.isEmpty) {
             // create a new user in Fire store
-            addUserDetails(userCredential.user!.displayName.toString(), email, "", "", "");
+            addUserDetails(
+                userCredential.user!.displayName.toString(), email, "", "", "");
           }
 
           SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -145,21 +153,24 @@ class _SigninScreenState extends State<SigninScreen> {
         print("Facebook login failed: ${loginResult.status}");
       }
     } catch (e) {
-      _showErrorMessage("Error with Facebook sign in", "This email is used before by different sign in ,please sign in by the same method you signed it before");
+      _showErrorMessage("Error with Facebook sign in",
+          "This email is used before by different sign in ,please sign in by the same method you signed it before");
       print("Error with Facebook sign in: $e");
     }
   }
 
-
-
-  Future addUserDetails(String userName, String email, String password, String phone,String profile_image) async {
-    await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).set({
+  Future addUserDetails(String userName, String email, String password,
+      String phone, String profile_image) async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .set({
       'uid': FirebaseAuth.instance.currentUser!.uid,
       'user_name': userName,
       'email': email,
       'password': password,
       'phone_number': phone,
-      'profile_image':profile_image
+      'profile_image': profile_image
     });
   }
 
@@ -177,6 +188,7 @@ Why it's important: It prevents memory leaks by ensuring that unnecessary resour
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Form(
         key: formKey,
         child: ListView(

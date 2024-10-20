@@ -29,6 +29,8 @@ class _HomepageState extends State<Homepage> {
       child: Scaffold(
         bottomNavigationBar: BottomNavigationBar(
           currentIndex: _currentIndex,
+          backgroundColor: Colors.white,
+          type: BottomNavigationBarType.fixed,
           selectedItemColor: Colors.red,
           unselectedItemColor: Colors.grey,
           showUnselectedLabels: true,

@@ -60,12 +60,11 @@ class _SignupScreenState extends State<SignupScreen> {
       FirebaseAuth.instance.currentUser!.sendEmailVerification();
 
       //add user details to fire store
-      addUserDetails(
-          nameController.text, emailController.text, passController.text, "",'');
+      addUserDetails(nameController.text, emailController.text,
+          passController.text, "", '');
 
       //show success message and go to  homepage
       _showSuccessMessageAndGoToLogin();
-
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
         _showErrorMessage('The password provided is too weak.', 'Warning!!');
@@ -78,14 +77,18 @@ class _SignupScreenState extends State<SignupScreen> {
     }
   }
 
-  Future addUserDetails(String userName, String email, String password, String phone,String profileImage) async {
-    await FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser!.uid).set({
+  Future addUserDetails(String userName, String email, String password,
+      String phone, String profileImage) async {
+    await FirebaseFirestore.instance
+        .collection('users')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .set({
       'uid': FirebaseAuth.instance.currentUser!.uid,
       'user_name': userName,
       'email': email,
       'password': password,
       'phone_number': phone,
-      'profile_image':profileImage
+      'profile_image': profileImage
     });
   }
 
@@ -108,11 +111,14 @@ class _SignupScreenState extends State<SignupScreen> {
       final email = googleUser.email;
 
       // Check if the email is used before
-      List<String> signInMethods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
+      List<String> signInMethods =
+          await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
 
       if (signInMethods.isNotEmpty) {
-        _showErrorMessage('An account already exists with this email. Please sign in with the appropriate method.', 'Error');
-      }else{
+        _showErrorMessage(
+            'An account already exists with this email. Please sign in with the appropriate method.',
+            'Error');
+      } else {
         await FirebaseAuth.instance.signInWithCredential(credential);
 
         // Accessing the email after Google Sign-In
@@ -121,18 +127,15 @@ class _SignupScreenState extends State<SignupScreen> {
           String? email = user.email;
 
           // Add user details to Firestore
-          addUserDetails(googleUser.displayName ?? '', email!, '', '','');
+          addUserDetails(googleUser.displayName ?? '', email!, '', '', '');
         }
 
         //show success message and go to homepage
         _showSuccessMessageAndGoToLogin();
       }
-
-      }
-    catch (e) {
+    } catch (e) {
       print('Error during Google Sign-In: $e');
     }
-
   }
 
   Future signInWithFacebook() async {
@@ -143,14 +146,16 @@ class _SignupScreenState extends State<SignupScreen> {
       // Check if the login was successful
       if (loginResult.status == LoginStatus.success) {
         // Create a credential from the access token
-        final OAuthCredential facebookAuthCredential = FacebookAuthProvider
-            .credential(loginResult.accessToken!.tokenString);
+        final OAuthCredential facebookAuthCredential =
+            FacebookAuthProvider.credential(
+                loginResult.accessToken!.tokenString);
 
         final userData = await FacebookAuth.instance.getUserData();
         final email = userData['email'];
 
         // Check if the email is used before
-        List<String> signInMethods = await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
+        List<String> signInMethods =
+            await FirebaseAuth.instance.fetchSignInMethodsForEmail(email);
 
         if (signInMethods.isNotEmpty) {
           _showErrorMessage(
@@ -170,7 +175,7 @@ class _SignupScreenState extends State<SignupScreen> {
             String? email = user.email;
 
             // Add user details to Fire store
-            await addUserDetails(name, email!, '', '','');
+            await addUserDetails(name, email!, '', '', '');
 
             // Show success message and go to the homepage
             _showSuccessMessageAndGoToLogin();
@@ -179,15 +184,16 @@ class _SignupScreenState extends State<SignupScreen> {
           }
         }
       }
-    }
-    catch (e) {
+    } catch (e) {
       print("Error during Facebook sign-in: $e");
       _showErrorMessage("Error during Facebook sign-in", "Error!!");
     }
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       body: Form(
         key: registerKey,
         child: ListView(
@@ -222,7 +228,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 keyboardType: TextInputType.text,
                 decoration: InputDecoration(
                     prefixIcon: Icon(Icons.account_box),
-                    labelText: 'Username', border: OutlineInputBorder()),
+                    labelText: 'Username',
+                    border: OutlineInputBorder()),
               ),
             ),
             SizedBox(
@@ -246,7 +253,8 @@ class _SignupScreenState extends State<SignupScreen> {
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                     prefixIcon: Icon(Icons.email),
-                    labelText: 'Email', border: OutlineInputBorder()),
+                    labelText: 'Email',
+                    border: OutlineInputBorder()),
               ),
             ),
             SizedBox(
