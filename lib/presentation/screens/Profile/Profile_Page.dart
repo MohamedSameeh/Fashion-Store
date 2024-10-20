@@ -374,20 +374,20 @@ class _ProfilePageState extends State<ProfilePage> {
                             ],
                           ),
                         ),
-                        Row(
-                          children: [
-                            IconButton(
-                                onPressed: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => AddProduct(),
-                                    ),
-                                  );
-                                },
-                                icon: Icon(Icons.settings)),
-                          ],
-                        )
+                        // Row(
+                        //   children: [
+                        //     IconButton(
+                        //         onPressed: () {
+                        //           Navigator.push(
+                        //             context,
+                        //             MaterialPageRoute(
+                        //               builder: (context) => AddProduct(),
+                        //             ),
+                        //           );
+                        //         },
+                        //         icon: Icon(Icons.settings)),
+                        //   ],
+                        // )
                       ],
                     ),
                   ),
