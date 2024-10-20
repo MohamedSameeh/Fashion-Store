@@ -41,10 +41,35 @@ class CartCubit extends Cubit<CartState> {
 
     if (newQuantity > 0) {
       try {
+        // Update Firestore with the new quantity
         await _firestore.collection('cart').doc(doc.id).update({
           'quantity': newQuantity,
         });
-        loadCartItems();
+
+        if (state is CartLoaded) {
+          final currentState = state as CartLoaded;
+          // Update the specific item in the current list
+          final updatedCartItems =
+              List<DocumentSnapshot>.from(currentState.cartItems);
+          final indexToUpdate =
+              updatedCartItems.indexWhere((item) => item.id == doc.id);
+
+          if (indexToUpdate != -1) {
+            // Modify the local cart item quantity
+            updatedCartItems[indexToUpdate] =
+                await _firestore.collection('cart').doc(doc.id).get();
+          }
+
+          // Recalculate total amount
+          double newTotalAmount = 0;
+          for (var item in updatedCartItems) {
+            newTotalAmount += item['proprice'] * item['quantity'];
+          }
+
+          // Emit new state with updated items
+          emit(CartLoaded(
+              cartItems: updatedCartItems, totalAmount: newTotalAmount));
+        }
       } catch (e) {
         emit(CartError(message: 'Failed to update quantity: ${e.toString()}'));
       }
@@ -54,7 +79,6 @@ class CartCubit extends Cubit<CartState> {
   // Delete Item
   void deleteItem(DocumentSnapshot doc) async {
     try {
-      // Delete the item from Firestore
       await _firestore.collection('cart').doc(doc.id).delete();
 
       if (state is CartLoaded) {
