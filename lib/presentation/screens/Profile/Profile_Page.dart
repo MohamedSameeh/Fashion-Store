@@ -1,21 +1,21 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:depi_final_project/AboutUs.dart';
-import 'package:depi_final_project/presentation/screens/Bag/BagPage.dart';
-import 'package:depi_final_project/presentation/screens/Bag/ShippingAddressesPage.dart';
-import 'package:depi_final_project/presentation/screens/Profile/UpdateUserInformationPage.dart';
 import 'package:depi_final_project/presentation/screens/Profile/utils.dart';
-import 'package:depi_final_project/presentation/screens/favorites/favoritesScreen.dart';
-import 'package:depi_final_project/presentation/screens/order/order_page.dart';
-import 'package:depi_final_project/presentation/screens/register/forgotPassword.dart';
-import 'package:depi_final_project/presentation/screens/register/signIn.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_facebook_auth/flutter_facebook_auth.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:typed_data';
+import 'package:flutter/services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+
+import '../../../AboutUs.dart';
+import '../Bag/BagPage.dart';
+import '../Bag/ShippingAddressesPage.dart';
+import '../favorites/favoritesScreen.dart';
+import '../order/order_page.dart';
+import '../register/forgotPassword.dart';
+import '../register/signIn.dart';
+import 'UpdateUserInformationPage.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -25,39 +25,17 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  String searchQuery = ''; // To hold the search query
+  String searchQuery = '';
 
   String userName = "", userEmail = "", phone = "", orders = "";
   Uint8List? _image;
+  Future<Map<String, dynamic>?>? _userDataFuture;
 
-  // Stream<Map<String, dynamic>> _fetchUserData() {
-  //   final firebaseUser = FirebaseAuth.instance.currentUser;
-  //
-  //   if (firebaseUser != null) {
-  //     return FirebaseFirestore.instance.collection('users').doc(firebaseUser.uid).snapshots().map((snapshot) {
-  //       if (snapshot.exists) {
-  //         Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
-  //
-  //         userName = data['user_name'];
-  //         userEmail = data['email'];
-  //
-  //         // Load the image
-  //         NetworkAssetBundle(Uri.parse(data['profile_image']))
-  //             .load('')
-  //             .then((value) => _image = value.buffer.asUint8List());
-  //
-  //         return data;  // Return the data to the StreamBuilder
-  //       } else {
-  //         throw Exception('Document does not exist');
-  //       }
-  //     });
-  //   } else {
-  //     // If the user is not logged in, return an empty stream
-  //     return Stream.empty();
-  //   }
-  // }
-
-  //change the photo of profile
+  @override
+  void initState() {
+    super.initState();
+    _userDataFuture = _fetchUserData();
+  }
 
   Future<Map<String, dynamic>?> _fetchUserData() async {
     try {
@@ -73,19 +51,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (doc.exists) {
         Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
+
         if (data != null) {
           userName = data['user_name'];
           userEmail = data['email'];
           phone = data['phone_number'];
-
-          // Fetch and display the saved profile image from Fire store
           String? profileImageUrl = data['profile_image'];
           if (profileImageUrl != null && profileImageUrl.isNotEmpty) {
-            print('found image....');
-            _image = await NetworkAssetBundle(Uri.parse(profileImageUrl))
-                .load('')
-                .then((value) => value.buffer.asUint8List());
+            _loadProfileImage(profileImageUrl);
           }
+
+          return data;
         } else {
           print('Document data is null');
         }
@@ -95,6 +71,18 @@ class _ProfilePageState extends State<ProfilePage> {
     } catch (e) {
       print("error.............$e");
     }
+    return null;
+  }
+
+  Future<void> _loadProfileImage(String profileImageUrl) async {
+    try {
+      _image = await NetworkAssetBundle(Uri.parse(profileImageUrl))
+          .load('')
+          .then((value) => value.buffer.asUint8List());
+      setState(() {});
+    } catch (e) {
+      print('Error loading profile image: $e');
+    }
   }
 
   void selectImage() async {
@@ -102,11 +90,10 @@ class _ProfilePageState extends State<ProfilePage> {
     setState(() {
       _image = img;
     });
-    // Upload the image and get the download URL
+
     String downloadUrl = await uploadImage(img);
 
     if (downloadUrl.isNotEmpty) {
-      // Save the image URL to Firestore
       await FirebaseFirestore.instance
           .collection('users')
           .doc(FirebaseAuth.instance.currentUser?.uid)
@@ -118,17 +105,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Future<String> uploadImage(Uint8List image) async {
     try {
-      // Create a reference to Firebase Storage
       final storageRef = FirebaseStorage.instance.ref().child(
           'profile_images/${FirebaseAuth.instance.currentUser?.uid}.jpg');
 
-      // Upload the image
       await storageRef.putData(image);
 
-      // Get the download URL
       String downloadUrl = await storageRef.getDownloadURL();
 
-      return downloadUrl; // Return the download URL
+      return downloadUrl;
     } catch (e) {
       print("Error uploading image: $e");
       return '';
@@ -174,206 +158,219 @@ class _ProfilePageState extends State<ProfilePage> {
         centerTitle: true,
         actions: [],
       ),
-      body: FutureBuilder(
-          future: _fetchUserData(),
-          builder: (BuildContext context,
-              AsyncSnapshot<Map<String, dynamic>?> snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('Reloading data...'),
-                  ],
-                ),
-              );
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error loading user data'));
-            } else {
-              return Stack(
-                children: [
-                  SingleChildScrollView(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0, vertical: 20.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Stack(
-                                children: [
-                                  _image != null
-                                      ? CircleAvatar(
+      body: FutureBuilder<Map<String, dynamic>?>(
+        future: _userDataFuture,
+        builder: (BuildContext context,
+            AsyncSnapshot<Map<String, dynamic>?> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(),
+            );
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error loading user data'));
+          } else if (!snapshot.hasData || snapshot.data == null) {
+            return Center(child: Text('No user data available'));
+          } else {
+            return Stack(
+              children: [
+                SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0, vertical: 20.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Stack(
+                              children: [
+                                _image != null
+                                    ? CircleAvatar(
+                                        radius: 50,
+                                        backgroundImage: MemoryImage(_image!),
+                                      )
+                                    : CachedNetworkImage(
+                                        imageUrl: snapshot
+                                                .data?['profile_image'] ??
+                                            'https://via.placeholder.com/150',
+                                        imageBuilder:
+                                            (context, imageProvider) =>
+                                                CircleAvatar(
                                           radius: 50,
-                                          backgroundImage: MemoryImage(_image!),
-                                        )
-                                      : CircleAvatar(
+                                          backgroundImage: imageProvider,
+                                        ),
+                                        placeholder: (context, url) =>
+                                            CircleAvatar(
                                           radius: 50,
-                                          backgroundImage: _image != null ? MemoryImage(_image!) : AssetImage('assets/images/placeholder.png')),
-                                  Positioned(
-                                    left: 50,
-                                    bottom: -10,
-                                    child: IconButton(
-                                        onPressed: selectImage,
-                                        icon: Icon(Icons.add_a_photo)),
-                                  )
-                                ],
-                              ),
-                              SizedBox(width: 18),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    userName,
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  SizedBox(height: 4),
-                                  Text(userEmail,
-                                      style: TextStyle(fontSize: 14)),
-                                ],
-                              ),
-                            ],
-                          ),
-                          SizedBox(height: 50),
-                          Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Divider(
-                                  indent: 5,
-                                  color: Colors.black,
-                                ),
-                                Text(
-                                  'Account Info',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                Divider()
-                              ]),
-                          SizedBox(height: 10),
-                          ...filteredItems.map((item) {
-                            return ListTile(
-                              title: Text(item['title']!),
-                              subtitle: Text(item['subtitle']!),
-                              trailing: Icon(
-                                Icons.arrow_forward_ios,
-                                color: Colors.red,
-                              ),
-                              onTap: () {
-                                if (item['title'] == 'My orders') {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => MyOrdersPage()),
-                                  );
-                                } else if (item['title'] == 'Cart') {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => BagPage()),
-                                  );
-                                } else if (item['title'] == 'Favorite') {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => FavoriteScreen()),
-                                  );
-                                } else if (item['title'] ==
-                                    'Shipping addresses') {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            ShippingAddressesPage()),
-                                  );
-                                }
-                              },
-                            );
-                          }).toList(),
-                          SizedBox(height: 20),
-                          Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Account Setting',
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              ]),
-                          ...filteredItemsSetting.map((item) {
-                            return ListTile(
-                              title: Text(item['title']!),
-                              subtitle: Text(item['subtitle']!),
-                              trailing: Icon(
-                                Icons.arrow_forward_ios,
-                                color: Colors.red,
-                              ),
-                              onTap: () {
-                                if (item['title'] == 'Edit Profile') {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            UpdateUserInformationPage()),
-                                  );
-                                } else if (item['title'] == 'Edit Password') {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) =>
-                                            ForgotpasswordScreen()),
-                                  );
-                                } else if (item['title'] == 'About US') {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                        builder: (context) => AboutUS()),
-                                  );
-                                }
-                              },
-                            );
-                          }).toList(),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 30),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                GestureDetector(
-                                  onTap: () {
-                                    // Navigate to forgotPassword.dart page using MaterialPageRoute
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => SigninScreen(),
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                        errorWidget: (context, url, error) =>
+                                            CircleAvatar(
+                                          radius: 50,
+                                          backgroundImage:
+                                              AssetImage('assets/images/5.jpg'),
+                                        ),
                                       ),
-                                    );
-                                  },
-                                  child: Text('Log out',
-                                      style: TextStyle(
-                                          color: Colors.red, fontSize: 18)),
+                                Positioned(
+                                  left: 50,
+                                  bottom: -10,
+                                  child: IconButton(
+                                      onPressed: selectImage,
+                                      icon: Icon(Icons.add_a_photo)),
                                 )
                               ],
                             ),
+                            SizedBox(width: 18),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  userName,
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                SizedBox(height: 4),
+                                Text(userEmail, style: TextStyle(fontSize: 14)),
+                              ],
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 50),
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Divider(
+                                indent: 5,
+                                color: Colors.black,
+                              ),
+                              Text(
+                                'Account Info',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                              Divider()
+                            ]),
+                        SizedBox(height: 10),
+                        ...filteredItems.map((item) {
+                          return ListTile(
+                            title: Text(item['title']!),
+                            subtitle: Text(item['subtitle']!),
+                            trailing: Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.red,
+                            ),
+                            onTap: () {
+                              if (item['title'] == 'My orders') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => MyOrdersPage()),
+                                );
+                              } else if (item['title'] == 'Cart') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => BagPage()),
+                                );
+                              } else if (item['title'] == 'Favorite') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => FavoriteScreen()),
+                                );
+                              } else if (item['title'] ==
+                                  'Shipping addresses') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          ShippingAddressesPage()),
+                                );
+                              }
+                            },
+                          );
+                        }).toList(),
+                        SizedBox(height: 20),
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                'Account Setting',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ]),
+                        ...filteredItemsSetting.map((item) {
+                          return ListTile(
+                            title: Text(item['title']!),
+                            subtitle: Text(item['subtitle']!),
+                            trailing: Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.red,
+                            ),
+                            onTap: () {
+                              if (item['title'] == 'Edit Profile') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          UpdateUserInformationPage()),
+                                );
+                              } else if (item['title'] == 'Edit Password') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          ForgotpasswordScreen()),
+                                );
+                              } else if (item['title'] == 'About US') {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => AboutUS()),
+                                );
+                              }
+                            },
+                          );
+                        }).toList(),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 30),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => SigninScreen(),
+                                    ),
+                                  );
+                                },
+                                child: Text('Log out',
+                                    style: TextStyle(
+                                        color: Colors.red, fontSize: 18)),
+                              )
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-              );
-            }
-          }),
+                ),
+              ],
+            );
+          }
+        },
+      ),
     );
   }
 }
