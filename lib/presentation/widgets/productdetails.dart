@@ -1,9 +1,16 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:share_plus/share_plus.dart';
+
+import '../../core/format.dart';
+import '../../core/theme/app_tokens.dart';
+import '../../core/widgets/app_widgets.dart';
+import '../../cubits/cart/cart_cubit.dart';
+import '../../cubits/catalog/catalog_cubit.dart';
 import '../models/product_model.dart';
+import '../screens/Homepage/homePage.dart';
+import 'homepage_new_sale.dart';
+import 'product_card.dart';
 
 class ProductDetailsPage extends StatefulWidget {
   final Product product;
@@ -14,420 +21,396 @@ class ProductDetailsPage extends StatefulWidget {
   State<ProductDetailsPage> createState() => _ProductDetailsPageState();
 }
 
-enum CartStatus {
-  loading,
-  error,
-  exists,
-  notExists,
-}
-
 class _ProductDetailsPageState extends State<ProductDetailsPage> {
-  String selectedSize = 'M';
-  String selectedColor = 'Black';
-  bool isFavorite = false;
+  late String selectedSize;
+  late String selectedColor;
+  int _imageIndex = 0;
+  bool _adding = false;
 
-  final List<String> sizes = ['S', 'M', 'L', 'XL'];
-  final List<String> colors = ['Black', 'White', 'Red'];
-
-  CartStatus cartStatus = CartStatus.notExists;
+  List<String> get sizes => widget.product.sizes.isNotEmpty
+      ? widget.product.sizes
+      : const ['S', 'M', 'L', 'XL'];
+  List<String> get colors => widget.product.colors.isNotEmpty
+      ? widget.product.colors
+      : const ['Black', 'White', 'Red'];
 
   @override
   void initState() {
     super.initState();
-    _checkIfFavorite();
+    selectedSize = sizes.length > 2 ? sizes[sizes.length ~/ 2] : sizes.first;
+    selectedColor = colors.first;
   }
 
-  void shareProduct() {
-    final shareText = 'Check out this product: ${widget.product.name}\n'
-        'Description: ${widget.product.description}\n'
-        'Price: \$${widget.product.price}\n';
-    Share.share(shareText);
+  void shareProduct(Product product) {
+    final shareText = 'Check out this product: ${product.name}\n'
+        'Description: ${product.description}\n'
+        'Price: ${money(product.salePrice)}\n';
+    try {
+      Share.share(shareText);
+    } catch (_) {
+      showAppSnack(context, 'Sharing is not available on this device');
+    }
   }
 
-  Future<void> _checkIfFavorite() async {
-    final userId = FirebaseAuth.instance.currentUser!.uid;
-    final favoriteRef = FirebaseFirestore.instance
-        .collection('favorites')
-        .doc(userId)
-        .collection('userFavorites')
-        .doc(widget.product.id);
-
-    final snapshot = await favoriteRef.get();
-    setState(() {
-      isFavorite = snapshot.exists;
-    });
+  Future<void> _addToCart(Product product) async {
+    setState(() => _adding = true);
+    final ok = await context
+        .read<CartCubit>()
+        .add(product, size: selectedSize, color: selectedColor);
+    if (!mounted) return;
+    setState(() => _adding = false);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        duration: const Duration(seconds: 3),
+        content: Text(ok
+            ? '${product.name} added to your bag'
+            : 'Could not add to bag. Please try again.'),
+        action: ok
+            ? SnackBarAction(
+                label: 'View bag',
+                onPressed: () {
+                  Homepage.tab.value = Homepage.bag;
+                  Navigator.of(context).popUntil((r) => r.isFirst);
+                },
+              )
+            : null,
+      ));
   }
 
   @override
   Widget build(BuildContext context) {
-    final DocumentReference cartRef =
-        FirebaseFirestore.instance.collection('cart').doc(widget.product.id);
-    final Stream<List<Product>> productsStream = FirebaseFirestore.instance
-        .collection('products')
-        .where('maincateg', isEqualTo: widget.product.category)
-        .where('subcateg', isEqualTo: widget.product.subcateg)
-        .snapshots()
-        .map((snapshot) =>
-            snapshot.docs.map((doc) => Product.fromFirestore(doc)).toList());
+    // Follow live catalogue updates (rating changes after a new review).
+    final catalog = context.watch<CatalogCubit>().state;
+    final product = (catalog is CatalogLoaded
+            ? catalog.byId(widget.product.id)
+            : null) ??
+        widget.product;
+    final related = catalog is CatalogLoaded
+        ? catalog.products
+            .where((p) =>
+                p.category == product.category && p.id != product.id)
+            .toList()
+        : <Product>[];
+    final imageHeight =
+        (MediaQuery.sizeOf(context).width * 1.08).clamp(320.0, 520.0);
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 2,
-        title: Text(widget.product.name,
-            style: const TextStyle(
-                color: Colors.black, fontWeight: FontWeight.bold)),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.share, color: Colors.black),
-            onPressed: shareProduct,
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      bottomNavigationBar: BottomActionBar(
+        child: Row(
           children: [
-            _buildProductImage(),
-            const SizedBox(height: 16.0),
-            _buildProductDetails(cartRef),
-            const Divider(thickness: 1),
-            const SizedBox(height: 16.0),
-            _buildRecommendedProducts(productsStream),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProductImage() {
-    return Center(
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(15),
-        child: CachedNetworkImage(
-          imageUrl: widget.product.images[0],
-          height: 350,
-          fit: BoxFit.cover,
-          placeholder: (context, url) =>
-              const Center(child: CircularProgressIndicator()),
-          errorWidget: (context, url, error) =>
-              const Icon(Icons.error, size: 50),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProductDetails(DocumentReference cartRef) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildProductTitleAndPrice(),
-          const SizedBox(height: 10),
-          _buildSizeAndColorDropdowns(),
-          const SizedBox(height: 10),
-          Text(widget.product.description,
-              style: const TextStyle(color: Colors.grey, fontSize: 16)),
-          const SizedBox(height: 20),
-          _buildAddToCartButton(cartRef),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
-
-  Row _buildProductTitleAndPrice() {
-    final double discountPrice =
-        widget.product.price * (1 - (widget.product.discount / 100));
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Expanded(
-          child: Text(widget.product.name,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 26)),
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            if (widget.product.discount > 0)
-              Text('\$${discountPrice.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                      color: Colors.redAccent,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 22)),
-            Text('\$${widget.product.price.toStringAsFixed(2)}',
-                style: const TextStyle(
-                    decoration: TextDecoration.lineThrough,
-                    color: Colors.grey,
-                    fontSize: 16)),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Row _buildSizeAndColorDropdowns() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        _buildDropdown<String>('Size', sizes, selectedSize, (value) {
-          setState(() {
-            selectedSize = value!;
-          });
-        }),
-        _buildDropdown<String>('Color', colors, selectedColor, (value) {
-          setState(() {
-            selectedColor = value!;
-          });
-        }),
-        IconButton(
-          icon: Icon(
-            isFavorite ? Icons.favorite : Icons.favorite_border,
-            color: isFavorite ? Colors.red : Colors.grey,
-          ),
-          onPressed: () async {
-            final userId = FirebaseAuth.instance.currentUser!.uid;
-            final favoriteRef = FirebaseFirestore.instance
-                .collection('favorites')
-                .doc(userId)
-                .collection('userFavorites')
-                .doc(widget.product.id);
-
-            final snapshot = await favoriteRef.get();
-
-            if (snapshot.exists) {
-              await favoriteRef.delete();
-              setState(() {
-                isFavorite = false;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Removed from favorites')),
-              );
-            } else {
-              await favoriteRef.set({
-                'id': widget.product.id,
-                'name': widget.product.name,
-                'price': widget.product.price,
-                'image': widget.product.images[0],
-              });
-              setState(() {
-                isFavorite = true;
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Added to favorites')),
-              );
-            }
-          },
-        ),
-      ],
-    );
-  }
-
-  DropdownButton<String> _buildDropdown<T>(
-    String hint,
-    List<String> items,
-    String selectedItem,
-    ValueChanged<String?> onChanged,
-  ) {
-    return DropdownButton<String>(
-      hint: Text(hint, style: const TextStyle(fontSize: 16)),
-      value: selectedItem,
-      onChanged: onChanged,
-      items: items.map<DropdownMenuItem<String>>((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(
-            value,
-            style: TextStyle(
-              color: value == selectedItem ? Colors.brown : Colors.black,
-              fontWeight:
-                  value == selectedItem ? FontWeight.bold : FontWeight.normal,
+            Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Price', style: context.text.bodySmall),
+                Text(money(product.salePrice),
+                    style: context.text.titleLarge),
+              ],
             ),
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildAddToCartButton(DocumentReference cartRef) {
-    return StreamBuilder<DocumentSnapshot>(
-      stream: cartRef.snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-              child: CircularProgressIndicator(color: Colors.black));
-        } else if (snapshot.hasError) {
-          return const Center(child: Text('Error'));
-        }
-
-        if (!snapshot.data!.exists) {
-          return _buildAddToCartButtonUI();
-        } else {
-          return Container(
-              width: double.infinity,
-              margin: const EdgeInsets.only(top: 20),
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.brown,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30)),
-                ),
-                onPressed: () {},
-                child: const Text("Already in Cart",
-                    style: TextStyle(color: Colors.white, fontSize: 18)),
-              ));
-        }
-      },
-    );
-  }
-
-  Widget _buildAddToCartButtonUI() {
-    return StatefulBuilder(builder: (context, setState) {
-      return Container(
-        width: double.infinity,
-        margin: const EdgeInsets.only(top: 20),
-        child: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.redAccent,
-            padding: const EdgeInsets.symmetric(vertical: 15),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-          ),
-          onPressed: () async {
-            setState(() {
-              cartStatus = CartStatus.loading;
-            });
-
-            try {
-              await FirebaseFirestore.instance
-                  .collection('cart')
-                  .doc(widget.product.id)
-                  .set({
-                'proname': widget.product.name,
-                'proprice': widget.product.price,
-                'prosize': selectedSize,
-                'procolor': selectedColor,
-                'proimage': widget.product.images[0],
-                'userid': FirebaseAuth.instance.currentUser!.uid,
-                'existInCart': true,
-                'cartProId': widget.product.id,
-                'quantity': 1,
-              });
-              setState(() {
-                cartStatus = CartStatus.exists;
-              });
-            } catch (e) {
-              setState(() {
-                cartStatus = CartStatus.error;
-              });
-            }
-          },
-          child: cartStatus == CartStatus.loading
-              ? const CircularProgressIndicator()
-              : const Text('ADD TO CART',
-                  style: TextStyle(fontSize: 18, color: Colors.white)),
-        ),
-      );
-    });
-  }
-
-  Widget _buildRecommendedProducts(Stream<List<Product>> productsStream) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('You may also like',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 10),
-          SizedBox(
-            height: 250,
-            child: StreamBuilder<List<Product>>(
-              stream: productsStream,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                      child: CircularProgressIndicator(color: Colors.black));
-                } else if (snapshot.hasError) {
-                  return const Center(child: Text('Error fetching products'));
-                }
-
-                final products = snapshot.data ?? [];
-                if (products.isEmpty) {
-                  return const Center(child: Text('No products found'));
-                }
-
-                return ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: products.length,
-                  itemBuilder: (context, index) {
-                    return _buildRecommendedProductCard(products[index]);
-                  },
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRecommendedProductCard(Product product) {
-    final double discountPrice = product.price * (1 - (product.discount / 100));
-    return Padding(
-      padding: const EdgeInsets.only(right: 15),
-      child: SizedBox(
-        width: 150,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProductDetailsPage(product: product),
-                  ),
-                );
-              },
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: CachedNetworkImage(
-                  imageUrl: product.images[0],
-                  width: 150,
-                  height: 150,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) =>
-                      const Center(child: CircularProgressIndicator()),
-                  errorWidget: (context, url, error) =>
-                      const Icon(Icons.error, size: 50),
-                ),
+            const SizedBox(width: AppSpace.xl),
+            Expanded(
+              child: LoadingButton(
+                label: 'Add to bag',
+                icon: Icons.shopping_bag_outlined,
+                loading: _adding,
+                onPressed: () => _addToCart(product),
               ),
             ),
-            const SizedBox(height: 5),
-            Text(product.name,
-                style:
-                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-            if (product.discount > 0)
-              Text('\$${discountPrice.toStringAsFixed(2)}',
-                  style:
-                      const TextStyle(color: Colors.redAccent, fontSize: 14)),
-            Text(
-              '\$${product.price.toStringAsFixed(2)}',
-              style: const TextStyle(
-                  decoration: TextDecoration.lineThrough, color: Colors.grey),
+          ],
+        ),
+      ),
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            pinned: true,
+            expandedHeight: imageHeight,
+            leading: _CircleAction(
+              tooltip: 'Back',
+              icon: Icons.arrow_back_rounded,
+              onTap: () => Navigator.of(context).maybePop(),
+            ),
+            actions: [
+              _CircleAction(
+                tooltip: 'Share',
+                icon: Icons.ios_share_rounded,
+                onTap: () => shareProduct(product),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 12, left: 4),
+                child: Center(child: FavoriteButton(product: product, size: 40)),
+              ),
+            ],
+            flexibleSpace: FlexibleSpaceBar(
+              background: Stack(
+                fit: StackFit.expand,
+                children: [
+                  PageView.builder(
+                    itemCount: product.images.length,
+                    onPageChanged: (i) => setState(() => _imageIndex = i),
+                    itemBuilder: (_, i) => ProductImage(product.images[i]),
+                  ),
+                  if (product.images.length > 1)
+                    Positioned(
+                      bottom: 14,
+                      left: 0,
+                      right: 0,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(
+                          product.images.length,
+                          (i) => Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            width: i == _imageIndex ? 18 : 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: Colors.white
+                                  .withValues(alpha: i == _imageIndex ? 1 : .6),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.pill),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  AppSpace.xl, AppSpace.xl, AppSpace.xl, 0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        '${product.categoryLabel} / ${product.subcateg}'
+                            .toUpperCase(),
+                        style: context.text.labelSmall!.copyWith(
+                            color: context.palette.textMuted,
+                            letterSpacing: 1.2),
+                      ),
+                      const Spacer(),
+                      if (product.onSale) DiscountBadge(product.discount),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+                  Text(product.name, style: context.text.headlineMedium),
+                  const SizedBox(height: AppSpace.sm),
+                  InkWell(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    onTap: () => Navigator.of(context)
+                        .pushNamed('rating_reviews', arguments: product),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          RatingStars(product.rating, size: 18),
+                          const SizedBox(width: 6),
+                          Text(
+                            product.reviewCount == 0
+                                ? 'No reviews yet'
+                                : '${product.rating.toStringAsFixed(1)} (${product.reviewCount} reviews)',
+                            style: context.text.bodySmall,
+                          ),
+                          Icon(Icons.chevron_right_rounded,
+                              size: 18, color: context.palette.textMuted),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+                  PriceText(
+                      price: product.price,
+                      salePrice: product.salePrice,
+                      large: true),
+                  const SizedBox(height: AppSpace.xl),
+                  Row(
+                    children: [
+                      Text('Size', style: context.text.titleSmall),
+                      const SizedBox(width: 8),
+                      Text(selectedSize, style: context.text.bodySmall),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+                  Wrap(
+                    spacing: AppSpace.sm,
+                    runSpacing: AppSpace.sm,
+                    children: [
+                      for (final s in sizes)
+                        ChoiceChip(
+                          label: Text(s),
+                          selected: s == selectedSize,
+                          onSelected: (_) =>
+                              setState(() => selectedSize = s),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.xl),
+                  Row(
+                    children: [
+                      Text('Color', style: context.text.titleSmall),
+                      const SizedBox(width: 8),
+                      Text(selectedColor, style: context.text.bodySmall),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.sm),
+                  Row(
+                    children: [
+                      for (final c in colors)
+                        _ColorDot(
+                          name: c,
+                          selected: c == selectedColor,
+                          onTap: () => setState(() => selectedColor = c),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: AppSpace.xl),
+                  Text('Details', style: context.text.titleSmall),
+                  const SizedBox(height: 6),
+                  Text(
+                    product.description,
+                    style: context.text.bodyMedium!
+                        .copyWith(color: context.palette.textMuted),
+                  ),
+                  const SizedBox(height: AppSpace.xl),
+                  const _InfoRow(
+                      icon: Icons.local_shipping_outlined,
+                      title: 'Free standard delivery over \$150',
+                      subtitle: 'Express and next-day options at checkout'),
+                  const SizedBox(height: AppSpace.md),
+                  const _InfoRow(
+                      icon: Icons.replay_rounded,
+                      title: '30-day returns',
+                      subtitle: 'Unworn items with tags attached'),
+                ],
+              ),
+            ),
+          ),
+          if (related.isNotEmpty) ...[
+            const SliverToBoxAdapter(
+                child: SectionHeader(title: 'You may also like')),
+            SliverToBoxAdapter(
+              child: HomepageNewSale(type: 'Related', products: related),
             ),
           ],
+          const SliverToBoxAdapter(child: SizedBox(height: AppSpace.xxl)),
+        ],
+      ),
+    );
+  }
+}
+
+class _CircleAction extends StatelessWidget {
+  const _CircleAction(
+      {required this.icon, required this.onTap, required this.tooltip});
+  final IconData icon;
+  final VoidCallback onTap;
+  final String tooltip;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Tooltip(
+        message: tooltip,
+        child: Material(
+          color: context.colors.surface,
+          shape: const CircleBorder(),
+          elevation: 2,
+          shadowColor: Colors.black26,
+          child: InkWell(
+            customBorder: const CircleBorder(),
+            onTap: onTap,
+            child: SizedBox(
+                width: 40,
+                height: 40,
+                child:
+                    Icon(icon, size: 20, color: context.colors.onSurface)),
+          ),
         ),
       ),
     );
   }
+}
+
+class _ColorDot extends StatelessWidget {
+  const _ColorDot(
+      {required this.name, required this.selected, required this.onTap});
+  final String name;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: AppSpace.md),
+      child: Semantics(
+        button: true,
+        selected: selected,
+        label: 'Color $name',
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: AppDurations.fast,
+            width: 40,
+            height: 40,
+            padding: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: selected
+                    ? context.colors.primary
+                    : Colors.transparent,
+                width: 2,
+              ),
+            ),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: colorFromName(name),
+                shape: BoxShape.circle,
+                border: Border.all(color: context.colors.outline),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow(
+      {required this.icon, required this.title, required this.subtitle});
+  final IconData icon;
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) => Row(
+        children: [
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: context.palette.surfaceAlt,
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Icon(icon, size: 20),
+          ),
+          const SizedBox(width: AppSpace.md),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: context.text.titleSmall),
+                Text(subtitle, style: context.text.bodySmall),
+              ],
+            ),
+          ),
+        ],
+      );
 }

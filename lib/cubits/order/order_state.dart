@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../data/models.dart';
 
 abstract class OrderState {}
 
@@ -7,7 +7,7 @@ class OrderInitial extends OrderState {}
 class OrderLoading extends OrderState {}
 
 class OrderLoaded extends OrderState {
-  final List<QueryDocumentSnapshot> orders;
+  final List<OrderModel> orders;
 
   OrderLoaded(this.orders);
 }

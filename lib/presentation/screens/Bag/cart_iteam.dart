@@ -1,148 +1,101 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:cached_network_image/cached_network_image.dart';
+
+import '../../../core/format.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/widgets/app_widgets.dart';
 import '../../../cubits/cart/cart_cubit.dart';
+import '../../../data/models.dart';
 
-class CartItem extends StatelessWidget {
-  final DocumentSnapshot item;
+/// One line of the bag: image, name, variant, quantity stepper, line total.
+/// Swipe left to remove.
+class CartItemTile extends StatelessWidget {
+  final CartItem item;
 
-  const CartItem({
-    super.key,
-    required this.item,
-  });
+  const CartItemTile({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      child: Card(
-        elevation: 8,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+    final cubit = context.read<CartCubit>();
+    return Dismissible(
+      key: ValueKey(item.id),
+      direction: DismissDirection.endToStart,
+      onDismissed: (_) {
+        cubit.deleteItem(item);
+        showAppSnack(context, '${item.name} removed from your bag');
+      },
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: AppSpace.xxl),
+        decoration: BoxDecoration(
+          color: context.colors.error,
+          borderRadius: AppRadius.card,
         ),
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: [Colors.white, Colors.grey.shade200], // Subtle gradient
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+        child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+      ),
+      child: AppCard(
+        padding: const EdgeInsets.all(AppSpace.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: SizedBox(
+                  width: 84, height: 104, child: ProductImage(item.image)),
             ),
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.grey.withOpacity(0.2),
-                spreadRadius: 3,
-                blurRadius: 6,
-                offset: Offset(0, 3), // Soft shadow
-              ),
-            ],
-          ),
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Product image
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: CachedNetworkImage(
-                  imageUrl: item['proimage'],
-                  width: 100,
-                  height: 120,
-                  fit: BoxFit.cover,
-                  placeholder: (context, url) => Center(
-                    child: CircularProgressIndicator(),
-                  ),
-                  errorWidget: (context, url, error) => Icon(Icons.error),
-                ),
-              ),
-              SizedBox(width: 16),
-              // Product details
-              Expanded(
+            const SizedBox(width: AppSpace.md),
+            Expanded(
+              child: SizedBox(
+                height: 104,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      item['proname'],
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.grey.shade800,
-                      ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(item.name,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: context.text.titleSmall),
+                        ),
+                        Tooltip(
+                          message: 'Remove ${item.name}',
+                          child: InkWell(
+                            customBorder: const CircleBorder(),
+                            onTap: () => cubit.deleteItem(item),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Icon(Icons.close_rounded,
+                                  size: 18, color: context.palette.textMuted),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    SizedBox(height: 6),
-                    Text(
-                      'Color: ${item['procolor']} | Size: ${item['prosize']}',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey.shade600,
-                      ),
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      '\$${item['proprice']}',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.redAccent,
-                      ),
+                    const SizedBox(height: 2),
+                    Text('Size ${item.size}  ·  ${item.color}',
+                        style: context.text.bodySmall),
+                    const Spacer(),
+                    Row(
+                      children: [
+                        QuantityStepper(
+                          quantity: item.quantity,
+                          onMinus: item.quantity > 1
+                              ? () => cubit.updateQuantity(item, -1)
+                              : null,
+                          onPlus: () => cubit.updateQuantity(item, 1),
+                        ),
+                        const Spacer(),
+                        Text(money(item.lineTotal),
+                            style: context.text.titleMedium),
+                      ],
                     ),
                   ],
                 ),
               ),
-              SizedBox(width: 16),
-              // Quantity control and delete button
-              Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Quantity control or delete icon
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade300,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: [
-                        // If quantity is 1, show delete icon instead of minus
-                        IconButton(
-                          icon: Icon(
-                            item['quantity'] == 1 ? Icons.delete : Icons.remove,
-                            size: 20,
-                            color: item['quantity'] == 1
-                                ? Colors.redAccent
-                                : Colors.grey.shade700,
-                          ),
-                          onPressed: () {
-                            if (item['quantity'] == 1) {
-                              // Delete item if quantity is 1
-                              context.read<CartCubit>().deleteItem(item);
-                            } else {
-                              // Decrease quantity
-                              context
-                                  .read<CartCubit>()
-                                  .updateQuantity(item, -1);
-                            }
-                          },
-                        ),
-                        Text(
-                          item['quantity'].toString(),
-                          style: TextStyle(fontSize: 16, color: Colors.black87),
-                        ),
-                        // Increase quantity
-                        IconButton(
-                          icon: Icon(Icons.add,
-                              size: 20, color: Colors.grey.shade700),
-                          onPressed: () {
-                            context.read<CartCubit>().updateQuantity(item, 1);
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

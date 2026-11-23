@@ -1,13 +1,15 @@
-import 'package:flutter/material.dart';
+import 'dart:typed_data';
+
 import 'package:image_picker/image_picker.dart';
 
-pickImage(ImageSource source) async{
-  final ImagePicker _imagePicker=ImagePicker();
-  //this is class in photo manager dart package which contains information of image like path, size
-  XFile? _file= await _imagePicker.pickImage(source: source);
-  if(_file != null){
-    return _file.readAsBytes();
+/// Opens the image picker and returns the bytes of the chosen image, or
+/// null when nothing was selected.
+Future<Uint8List?> pickImage(ImageSource source) async {
+  final ImagePicker imagePicker = ImagePicker();
+  try {
+    final XFile? file = await imagePicker.pickImage(source: source);
+    return await file?.readAsBytes();
+  } catch (_) {
+    return null;
   }
-  //no image selected
-  print("No image Selected");
 }

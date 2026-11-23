@@ -1,27 +1,36 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:depi_final_project/cubits/order/order_state.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:async';
+
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../data/models.dart';
+import '../../data/store_repository.dart';
+import 'order_state.dart';
+
 class OrderCubit extends Cubit<OrderState> {
-  OrderCubit() : super(OrderInitial());
+  OrderCubit({StoreRepository? repository})
+      : _repo = repository ?? Repo.store,
+        super(OrderInitial());
+
+  final StoreRepository _repo;
+  StreamSubscription<List<OrderModel>>? _sub;
 
   void fetchOrders() {
     emit(OrderLoading());
-    final userId = FirebaseAuth.instance.currentUser!.uid;
+    _sub?.cancel();
+    try {
+      _sub = _repo.watchMyOrders().listen(
+            (orders) => emit(OrderLoaded(orders)),
+            onError: (error) =>
+                emit(OrderError('We could not load your orders.')),
+          );
+    } catch (_) {
+      emit(OrderError('We could not load your orders.'));
+    }
+  }
 
-    FirebaseFirestore.instance
-        .collection('orders')
-        .where('userid', isEqualTo: userId)
-        .snapshots()
-        .listen((snapshot) {
-      if (snapshot.docs.isEmpty) {
-        emit(OrderLoaded([]));
-      } else {
-        emit(OrderLoaded(snapshot.docs));
-      }
-    }, onError: (error) {
-      emit(OrderError('Error loading orders: ${error.toString()}'));
-    });
+  @override
+  Future<void> close() {
+    _sub?.cancel();
+    return super.close();
   }
 }

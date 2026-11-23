@@ -51,7 +51,7 @@ dev_dependencies:
     sdk: flutter
 
 icons_launcher:
-  image_path: assets/images/logoapplication.jpg
+  image_path: assets/images/app_icon_1024.png
   platforms:
     android:
       enable: true

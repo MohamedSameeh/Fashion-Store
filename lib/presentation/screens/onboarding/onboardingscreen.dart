@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/theme/app_tokens.dart';
+
 class Onboardingscreen extends StatefulWidget {
   const Onboardingscreen({super.key});
 
@@ -8,149 +10,137 @@ class Onboardingscreen extends StatefulWidget {
 }
 
 class _OnboardingscreenState extends State<Onboardingscreen> {
-  final PageController _pageController = PageController();
+  final PageController _controller = PageController();
   int currentPage = 0;
 
-  void onPageChanged(int page) {
-    setState(() {
-      currentPage = page;
-    });
+  static const _pages = [
+    (
+      image: 'assets/images/boarding1.png',
+      title: 'Personalized Fashion',
+      body:
+          'Discover clothes that match your style, from casual to formal, with handpicked selections just for you.',
+    ),
+    (
+      image: 'assets/images/boarding.png',
+      title: 'Fashion for Everyone',
+      body:
+          'The latest trends for women, men and kids. Shop your favorite styles with a quick, secure checkout.',
+    ),
+    (
+      image: 'assets/images/onboarding3.png',
+      title: 'Exclusive Deals',
+      body:
+          'Stay up to date with the latest offers and grab your favorite items at a better price before they are gone.',
+    ),
+  ];
+
+  void _finish() => Navigator.pushReplacementNamed(context, 'signIn');
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    final last = currentPage == _pages.length - 1;
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          PageView(
-            controller: _pageController,
-            onPageChanged: onPageChanged,
-            children: [
-              Column(
-                children: [
-                  SizedBox(height: 100),
-                  Image.asset(
-                    'assets/images/boarding1.png',
-                    fit: BoxFit.cover,
-                  ),
-                  SizedBox(height: 15),
-                  Text(
-                    'Personalized Fashion',
-                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 15),
-                  Text(
-                    'Discover clothes that match your style perfectly from casual to formal, find handpicked selections just for you',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w400,
-                        color: Colors.grey),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-              Column(
-                children: [
-                  SizedBox(height: 100),
-                  Image.asset(
-                    'assets/images/boarding.png',
-                  ),
-                  SizedBox(height: 15),
-                  Text(
-                    'Fashion for Everyone',
-                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 15),
-                  Text(
-                    'Discover the latest trends for both men and women, shop effortlessly and securely for your favorite styles, with easy payment options designed for your convenience',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.normal,
-                        color: Colors.grey),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-              Column(
-                children: [
-                  SizedBox(height: 205),
-                  Image.asset(
-                    'assets/images/onboarding3.png',
-                    fit: BoxFit.cover,
-                  ),
-                  SizedBox(height: 15),
-                  Text(
-                    'Exclusive Deals',
-                    style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 15),
-                  Text(
-                    'Stay updated with the latest offers and discounts, grab your favorite items at unbeatable prices before they’re gone',
-                    style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.normal,
-                        color: Colors.grey),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ],
-          ),
-          Positioned(
-            top: 50,
-            right: 20,
-            child: TextButton(
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, 'signIn');
-              },
-              child: Text(
-                'Skip',
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+      body: SafeArea(
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: AppSpace.sm, top: 4),
+                child: TextButton(onPressed: _finish, child: const Text('Skip')),
               ),
             ),
-          ),
-          Positioned(
-            bottom: 30,
-            left: 20,
-            right: 20,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: List.generate(3, (index) {
-                    return Container(
-                      margin: EdgeInsets.symmetric(horizontal: 3),
-                      width: currentPage == index ? 12 : 8,
-                      height: currentPage == index ? 12 : 8,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: currentPage == index
-                            ? Colors.blue
-                            : Colors.grey.withOpacity(0.5),
-                      ),
-                    );
-                  }),
-                ),
-                TextButton(
+            Expanded(
+              child: PageView.builder(
+                controller: _controller,
+                itemCount: _pages.length,
+                onPageChanged: (i) => setState(() => currentPage = i),
+                itemBuilder: (context, i) {
+                  final p = _pages[i];
+                  return Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: AppSpace.xxl),
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: Center(
+                            child: Container(
+                              constraints: const BoxConstraints(
+                                  maxWidth: 340, maxHeight: 340),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius:
+                                    BorderRadius.circular(AppRadius.xl + 8),
+                                border: Border.all(
+                                    color: context.colors.outline),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              padding: const EdgeInsets.all(AppSpace.xl),
+                              child: Image.asset(p.image, fit: BoxFit.contain),
+                            ),
+                          ),
+                        ),
+                        Text(p.title,
+                            textAlign: TextAlign.center,
+                            style: context.text.headlineLarge),
+                        const SizedBox(height: AppSpace.md),
+                        Text(
+                          p.body,
+                          textAlign: TextAlign.center,
+                          style: context.text.bodyLarge!
+                              .copyWith(color: context.palette.textMuted),
+                        ),
+                        const SizedBox(height: AppSpace.xxl),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(_pages.length, (i) {
+                final active = i == currentPage;
+                return AnimatedContainer(
+                  duration: AppDurations.normal,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  width: active ? 26 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: active
+                        ? context.colors.primary
+                        : context.colors.outline,
+                    borderRadius: BorderRadius.circular(AppRadius.pill),
+                  ),
+                );
+              }),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(AppSpace.xxl),
+              child: SizedBox(
+                width: double.infinity,
+                child: FilledButton(
                   onPressed: () {
-                    if (currentPage < 2) {
-                      _pageController.nextPage(
-                          duration: Duration(milliseconds: 300),
-                          curve: Curves.ease);
+                    if (last) {
+                      _finish();
                     } else {
-                      Navigator.pushReplacementNamed(context, 'signIn');
+                      _controller.nextPage(
+                          duration: AppDurations.normal,
+                          curve: Curves.easeOutCubic);
                     }
                   },
-                  child: Text(
-                    currentPage == 2 ? 'Finish' : 'Next',
-                    style: TextStyle(color: Colors.blue, fontSize: 16),
-                  ),
+                  child: Text(last ? 'Get started' : 'Next'),
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

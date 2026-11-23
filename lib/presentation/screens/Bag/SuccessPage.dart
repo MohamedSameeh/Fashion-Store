@@ -1,40 +1,81 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/format.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/widgets/app_widgets.dart';
+import '../../../data/models.dart';
+import '../Homepage/homePage.dart';
+import '../order/order_details_page.dart';
+
 class SuccessPage extends StatelessWidget {
+  const SuccessPage({super.key, required this.order});
+  final OrderModel order;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('SUCCESS'),
-        centerTitle: true,
-      ),
-      body: Center(
+      body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(AppSpace.xxl),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Icon(
-                Icons.shopping_bag,
-                size: 100,
-                color: Colors.green,
+            children: [
+              const Spacer(),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0.6, end: 1),
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeOutBack,
+                builder: (_, v, child) =>
+                    Transform.scale(scale: v, child: child),
+                child: Container(
+                  width: 112,
+                  height: 112,
+                  decoration: BoxDecoration(
+                    color: context.palette.success.withValues(alpha: 0.14),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.check_rounded,
+                      size: 56, color: context.palette.success),
+                ),
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: AppSpace.xxl),
+              Text('Order placed!', style: context.text.displaySmall),
+              const SizedBox(height: AppSpace.sm),
               Text(
-                'Your order will be delivered soon. Thank you for choosing our app!',
+                'Thank you for choosing our app. We are getting your order ready.',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18),
+                style: context.text.bodyLarge!
+                    .copyWith(color: context.palette.textMuted),
               ),
-              SizedBox(height: 40),
-              ElevatedButton(
-                onPressed: () {
-                  // Navigate to the shopping page
-                  Navigator.pop(context);
-                },
-                child: Text('CONTINUE SHOPPING'),
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white, backgroundColor: Colors.red,
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              const SizedBox(height: AppSpace.xxl),
+              AppCard(
+                child: Column(
+                  children: [
+                    _row(context, 'Order number', order.number),
+                    _row(context, 'Items', '${order.units}'),
+                    _row(context, 'Delivery', order.deliveryMethod),
+                    _row(context, 'Total', money(order.total)),
+                  ],
+                ),
+              ),
+              const Spacer(flex: 2),
+              LoadingButton(
+                label: 'Track order',
+                icon: Icons.local_shipping_outlined,
+                onPressed: () => Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => OrderDetailsPage(order: order)),
+                ),
+              ),
+              const SizedBox(height: AppSpace.md),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () {
+                    Homepage.tab.value = Homepage.home;
+                    Navigator.of(context).popUntil((r) => r.isFirst);
+                  },
+                  child: const Text('Continue shopping'),
                 ),
               ),
             ],
@@ -43,4 +84,18 @@ class SuccessPage extends StatelessWidget {
       ),
     );
   }
+
+  Widget _row(BuildContext context, String label, String value) => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 5),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(label,
+                  style: context.text.bodyMedium!
+                      .copyWith(color: context.palette.textMuted)),
+            ),
+            Text(value, style: context.text.titleSmall),
+          ],
+        ),
+      );
 }

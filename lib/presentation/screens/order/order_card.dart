@@ -1,147 +1,92 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:expandable/expandable.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+
+import '../../../core/format.dart';
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/widgets/app_widgets.dart';
+import '../../../data/models.dart';
+import 'order_details_page.dart';
 
 class OrderCard extends StatelessWidget {
-  final QueryDocumentSnapshot order;
+  final OrderModel order;
 
-  const OrderCard({required this.order, Key? key}) : super(key: key);
+  const OrderCard({super.key, required this.order});
 
   @override
   Widget build(BuildContext context) {
-    final orderItems = List<Map<String, dynamic>>.from(order['orderItems']);
-    final orderDate = (order['orderDate'] as Timestamp).toDate();
-    final formattedDate =
-        DateFormat('MMMM dd, yyyy – h:mm a').format(orderDate);
-
-    Color statusColor;
-    IconData statusIcon;
-
-    switch (order['status']) {
-      case 'Delivered':
-        statusColor = Colors.green;
-        statusIcon = Icons.check_circle_outline;
-        break;
-      case 'Shipped':
-        statusColor = Colors.blueAccent;
-        statusIcon = Icons.local_shipping_outlined;
-        break;
-      case 'Processing':
-      default:
-        statusColor = Colors.orange;
-        statusIcon = Icons.hourglass_empty_outlined;
-        break;
-    }
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+    final shown = order.items.take(4).toList();
+    final extra = order.items.length - shown.length;
+    return Semantics(
+      button: true,
+      label: 'Order ${order.number}',
+      child: AppCard(
+        onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => OrderDetailsPage(order: order)),
         ),
-        color: Colors.white,
-        child: ExpandablePanel(
-          header: ListTile(
-            title: Text(
-              'Order Total: \$${order['totalAmount'].toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            subtitle: Text(
-              'Ordered on: $formattedDate',
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-              ),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
               children: [
-                Icon(statusIcon, color: statusColor, size: 24),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Order ${order.number}',
+                          style: context.text.titleMedium),
+                      const SizedBox(height: 2),
+                      Text(shortDate(order.date),
+                          style: context.text.bodySmall),
+                    ],
+                  ),
+                ),
+                OrderStatusChip(order.status),
+              ],
+            ),
+            const SizedBox(height: AppSpace.md),
+            Row(
+              children: [
+                for (final item in shown)
+                  Padding(
+                    padding: const EdgeInsets.only(right: AppSpace.sm),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                      child: SizedBox(
+                          width: 48,
+                          height: 58,
+                          child: ProductImage(item.image)),
+                    ),
+                  ),
+                if (extra > 0)
+                  Container(
+                    width: 48,
+                    height: 58,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: context.palette.surfaceAlt,
+                      borderRadius: BorderRadius.circular(AppRadius.sm),
+                    ),
+                    child: Text('+$extra', style: context.text.labelMedium),
+                  ),
+              ],
+            ),
+            const SizedBox(height: AppSpace.md),
+            const Divider(),
+            const SizedBox(height: AppSpace.md),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                      '${order.units} ${order.units == 1 ? 'item' : 'items'}  ·  ${order.deliveryMethod} delivery',
+                      style: context.text.bodySmall),
+                ),
+                Text(money(order.total), style: context.text.titleMedium),
                 const SizedBox(width: 4),
-                Text(
-                  order['status'],
-                  style: TextStyle(
-                    color: statusColor,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
+                Icon(Icons.chevron_right_rounded,
+                    color: context.palette.textMuted),
               ],
             ),
-          ),
-          expanded: Padding(
-            padding:
-                const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Order Items:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black54,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                ...orderItems.map((item) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 8.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('x${item['quantity']}',
-                            style: const TextStyle(fontSize: 14)),
-                        Expanded(
-                          child: Text(
-                            item['proname'],
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 14),
-                          ),
-                        ),
-                        Text('\$${item['proprice'].toStringAsFixed(2)}',
-                            style: const TextStyle(fontSize: 14)),
-                      ],
-                    ),
-                  );
-                }).toList(),
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Total Amount:',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      '\$${order['totalAmount'].toStringAsFixed(2)}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.red, // Changed to red
-                        fontSize: 16,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          theme: ExpandableThemeData(
-            headerAlignment: ExpandablePanelHeaderAlignment.center,
-            iconColor: Colors.grey,
-            expandIcon: Icons.keyboard_arrow_down,
-            collapseIcon: Icons.keyboard_arrow_up,
-          ),
-          collapsed: const SizedBox.shrink(),
+          ],
         ),
       ),
     );

@@ -1,9 +1,14 @@
-import 'package:awesome_dialog/awesome_dialog.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:email_validator/email_validator.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/widgets/app_widgets.dart';
+import '../../../data/auth_repository.dart';
+import '../../../data/store_repository.dart';
+import 'auth_widgets.dart';
+
+/// Signed out: sends a password reset email.
+/// Signed in (opened from Profile > Change password): sets a new password.
 class ForgotpasswordScreen extends StatefulWidget {
   const ForgotpasswordScreen({super.key});
 
@@ -12,211 +17,152 @@ class ForgotpasswordScreen extends StatefulWidget {
 }
 
 class _ForgotpasswordScreenState extends State<ForgotpasswordScreen> {
-  String address = "@gmail.com";
-  TextEditingController gmailController = TextEditingController();
-  TextEditingController newPasswordController = TextEditingController();
-  bool isEmailSend = false; //to handel the UI
-  bool passwordVisible = false;
-
   final _formKey = GlobalKey<FormState>();
+  final gmailController = TextEditingController();
+  final newPasswordController = TextEditingController();
+  final confirmController = TextEditingController();
+  bool isEmailSend = false;
+  bool _loading = false;
+  bool _obscure = true;
 
-  void _showErrorMessage(String message, String title) {
-    if (!mounted) return; //this to check if the screen still exist or no
-    AwesomeDialog(
-      context: context,
-      dialogType: DialogType.error,
-      animType: AnimType.rightSlide,
-      title: title,
-      desc: message,
-      btnCancelOnPress: () {},
-      btnOkOnPress: () {},
-    ).show();
+  bool get _changeMode => Repo.auth.isSignedIn;
+
+  @override
+  void dispose() {
+    gmailController.dispose();
+    newPasswordController.dispose();
+    confirmController.dispose();
+    super.dispose();
   }
 
-  Future<void> updateUserPassword() async {
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+    FocusScope.of(context).unfocus();
+    setState(() => _loading = true);
     try {
-      //update the fire store
-      final currentUser = FirebaseAuth.instance.currentUser;
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser?.uid)
-          .update({'password': newPasswordController.text});
-
-      //update the password
-      User? user = FirebaseAuth.instance.currentUser;
-      await user?.updatePassword(newPasswordController.text);
-
-      //show success message
-      AwesomeDialog(
-        context: context,
-        dialogType: DialogType.success,
-        animType: AnimType.rightSlide,
-        title: "Success",
-        desc: "updated Successfully",
-        btnCancelOnPress: () {},
-        btnOkOnPress: () {
-          Navigator.pushReplacementNamed(context, 'profilePage');
-        },
-      ).show();
-    } catch (e) {
-      print('Error updating password: $e');
+      if (_changeMode) {
+        await Repo.auth.updatePassword(newPasswordController.text);
+        if (!mounted) return;
+        showAppSnack(context, 'Password updated');
+        Navigator.pop(context);
+      } else {
+        await Repo.auth.sendPasswordReset(gmailController.text.trim());
+        if (mounted) setState(() => isEmailSend = true);
+      }
+    } on AuthFailure catch (e) {
+      if (mounted) {
+        await showMessageDialog(context,
+            icon: Icons.error_outline_rounded,
+            title: 'Something went wrong',
+            message: e.message);
+      }
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios,
-            color: Colors.black,
-          ),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
-      body: Container(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                  margin: EdgeInsets.only(top: 10, left: 10),
-                  child: Text(
-                    isEmailSend ? "Set New Password" : "Change Password",
-                    style: TextStyle(
-                        fontSize: 35.sp,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black),
-                  )),
-              SizedBox(
-                height: 100,
-              ),
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Text(
-                  isEmailSend
-                      ? "Please enter your new password"
-                      : 'Please, enter your email address. You will receive a link to verify your email.',
-                  style: TextStyle(color: Colors.black, fontSize: 15),
-                ),
-              ),
-              Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    if (!isEmailSend) //show Email field
-                      Container(
-                        margin: EdgeInsets.only(left: 10, right: 10, top: 15),
-                        width: 400,
-                        child: TextFormField(
-                          controller: gmailController,
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (val) {
-                            if (val == null || val.isEmpty) {
-                              return 'Email is required';
-                            } else if (!RegExp(
-                                    r'^[\w-\.]+@(gmail\.com|fsc\.bu\.edu\.eg|outlook\.com)$')
-                                .hasMatch(val)) {
-                              return 'Enter a valid email (e.g., example@gmail.com)';
-                            }
-                            return null;
-                          },
-                          decoration: InputDecoration(
-                            labelText: 'Email',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    if (isEmailSend) //show new password field
-                      Container(
-                        margin: EdgeInsets.only(left: 10, right: 10, top: 15),
-                        width: 400,
-                        child: TextFormField(
-                          controller: newPasswordController,
-                          obscureText: !passwordVisible,
-                          validator: (val) {
-                            if (val == null || val.isEmpty) {
-                              return 'New password is required';
-                            }
-                            return null;
-                          },
-                          decoration: InputDecoration(
-                            suffixIcon: IconButton(
-                              icon: Icon(
-                                // Based on passwordVisible state choose the icon
-                                passwordVisible
-                                    ? Icons.visibility
-                                    : Icons.visibility_off,
-                                color: Theme.of(context).primaryColorDark,
-                              ),
-                              onPressed: () {
-                                //Toggle the state of passwordVisible variable
-                                setState(() {
-                                  passwordVisible = !passwordVisible;
-                                });
-                              },
-                            ),
-                            labelText: 'New Password',
-                            border: OutlineInputBorder(),
-                          ),
-                        ),
-                      ),
-                    Container(
-                      width: 400, // Adjust width as per your design
-                      margin: EdgeInsets.only(left: 10, right: 10, top: 50),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(50),
-                        color: Colors.red,
-                      ),
-                      child: MaterialButton(
-                        minWidth: 100,
-                        onPressed: () async {
-                          if (_formKey.currentState!.validate()) {
-                            //to handel if user enter wrong email
-                            if (!isEmailSend) {
-                              try {
-                                await FirebaseAuth.instance
-                                    .sendPasswordResetEmail(
-                                        email: gmailController.text);
-                                setState(() {
-                                  isEmailSend = true;
-                                });
-                                ScaffoldMessenger.of(context)
-                                    .showSnackBar(SnackBar(
-                                  content: Text('Email Verified successfully!'),
-                                ));
-                              } catch (e) {
-                                _showErrorMessage(
-                                    "Enter correct Email....", "Error!!");
-                              }
-                            } else {
-                              // password update
-                              updateUserPassword();
-                            }
-                          }
-                        },
-                        child: Text(
-                          isEmailSend ? 'Change' : 'Send',
-                          style: TextStyle(
-                            fontSize: 30,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
+    if (_changeMode) {
+      return AuthScaffold(
+        showBack: true,
+        title: 'Change password',
+        subtitle: 'Choose a new password for your account.',
+        children: [
+          Form(
+            key: _formKey,
+            child: Column(
+              children: [
+                TextFormField(
+                  controller: newPasswordController,
+                  obscureText: _obscure,
+                  decoration: InputDecoration(
+                    labelText: 'New password',
+                    prefixIcon: const Icon(Icons.lock_outline_rounded),
+                    suffixIcon: IconButton(
+                      tooltip: _obscure ? 'Show password' : 'Hide password',
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                      icon: Icon(_obscure
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined),
                     ),
-                  ],
+                  ),
+                  validator: (v) => (v ?? '').length < 6
+                      ? 'Use at least 6 characters'
+                      : null,
                 ),
-              ),
-            ],
+                const SizedBox(height: AppSpace.lg),
+                TextFormField(
+                  controller: confirmController,
+                  obscureText: _obscure,
+                  decoration: const InputDecoration(
+                    labelText: 'Confirm new password',
+                    prefixIcon: Icon(Icons.lock_outline_rounded),
+                  ),
+                  validator: (v) => v != newPasswordController.text
+                      ? 'Passwords do not match'
+                      : null,
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
+          const SizedBox(height: AppSpace.xxl),
+          LoadingButton(
+              label: 'Update password', loading: _loading, onPressed: _submit),
+        ],
+      );
+    }
+
+    return AuthScaffold(
+      showBack: true,
+      title: 'Forgot password',
+      subtitle: isEmailSend
+          ? 'If an account exists for ${gmailController.text.trim()}, a reset link is on its way.'
+          : 'Enter your email and we will send you a link to reset your password.',
+      children: [
+        if (!isEmailSend) ...[
+          Form(
+            key: _formKey,
+            child: TextFormField(
+              controller: gmailController,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: 'Email',
+                prefixIcon: Icon(Icons.mail_outline_rounded),
+              ),
+              validator: (v) => EmailValidator.validate((v ?? '').trim())
+                  ? null
+                  : 'Enter a valid email',
+            ),
+          ),
+          const SizedBox(height: AppSpace.xxl),
+          LoadingButton(
+              label: 'Send reset link', loading: _loading, onPressed: _submit),
+        ] else ...[
+          Container(
+            padding: const EdgeInsets.all(AppSpace.lg),
+            decoration: BoxDecoration(
+              color: context.palette.success.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.mark_email_read_outlined,
+                    color: context.palette.success),
+                const SizedBox(width: AppSpace.md),
+                Expanded(
+                  child: Text('Check your inbox and follow the link.',
+                      style: context.text.bodyMedium),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpace.xxl),
+          LoadingButton(
+              label: 'Back to login',
+              onPressed: () => Navigator.pop(context)),
+        ],
+      ],
     );
   }
 }

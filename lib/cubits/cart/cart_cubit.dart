@@ -1,154 +1,90 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../data/models.dart';
+import '../../data/store_repository.dart';
+import '../../presentation/models/product_model.dart';
 import 'cart_state.dart';
 
 class CartCubit extends Cubit<CartState> {
-  CartCubit() : super(CartLoading());
+  CartCubit({StoreRepository? repository})
+      : _repo = repository ?? Repo.store,
+        super(CartLoading());
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final StoreRepository _repo;
+
+  void _emitItems(List<CartItem> items) {
+    if (items.isEmpty) {
+      emit(CartEmpty());
+    } else {
+      final total = items.fold<double>(0, (a, i) => a + i.lineTotal);
+      emit(CartLoaded(cartItems: items, totalAmount: total));
+    }
+  }
 
   // Load Cart Items
-  Future<void> loadCartItems() async {
-    emit(CartLoading());
+  Future<void> loadCartItems({bool silent = false}) async {
+    if (!silent) emit(CartLoading());
     try {
-      final userId = _auth.currentUser!.uid;
-      final cartSnapshot = await _firestore
-          .collection('cart')
-          .where('userid', isEqualTo: userId)
-          .get();
-
-      if (cartSnapshot.docs.isEmpty) {
-        emit(CartEmpty());
-      } else {
-        double totalAmount = 0;
-        for (var doc in cartSnapshot.docs) {
-          totalAmount += doc['proprice'] * doc['quantity'];
-        }
-        emit(
-            CartLoaded(cartItems: cartSnapshot.docs, totalAmount: totalAmount));
-      }
+      _emitItems(await _repo.loadCart());
     } catch (e) {
-      emit(CartError(message: 'Failed to load cart: ${e.toString()}'));
+      emit(CartError(message: 'Failed to load your bag. Please try again.'));
+    }
+  }
+
+  // Add a product (used by product details and by "reorder")
+  Future<bool> add(Product product,
+      {required String size, required String color, int quantity = 1}) async {
+    try {
+      await _repo.addToCart(product,
+          size: size, color: color, quantity: quantity);
+      await loadCartItems(silent: true);
+      return true;
+    } catch (_) {
+      return false;
     }
   }
 
   // Update Quantity
-  void updateQuantity(DocumentSnapshot doc, int quantityChange) async {
-    int currentQuantity = doc['quantity'];
-    int newQuantity = currentQuantity + quantityChange;
-
-    if (newQuantity > 0) {
-      try {
-        // Update Firestore with the new quantity
-        await _firestore.collection('cart').doc(doc.id).update({
-          'quantity': newQuantity,
-        });
-
-        if (state is CartLoaded) {
-          final currentState = state as CartLoaded;
-          // Update the specific item in the current list
-          final updatedCartItems =
-              List<DocumentSnapshot>.from(currentState.cartItems);
-          final indexToUpdate =
-              updatedCartItems.indexWhere((item) => item.id == doc.id);
-
-          if (indexToUpdate != -1) {
-            // Modify the local cart item quantity
-            updatedCartItems[indexToUpdate] =
-                await _firestore.collection('cart').doc(doc.id).get();
-          }
-
-          // Recalculate total amount
-          double newTotalAmount = 0;
-          for (var item in updatedCartItems) {
-            newTotalAmount += item['proprice'] * item['quantity'];
-          }
-
-          // Emit new state with updated items
-          emit(CartLoaded(
-              cartItems: updatedCartItems, totalAmount: newTotalAmount));
-        }
-      } catch (e) {
-        emit(CartError(message: 'Failed to update quantity: ${e.toString()}'));
-      }
+  Future<void> updateQuantity(CartItem item, int quantityChange) async {
+    final newQuantity = item.quantity + quantityChange;
+    if (newQuantity <= 0) return;
+    try {
+      await _repo.setCartQuantity(item, newQuantity);
+      await loadCartItems(silent: true);
+    } catch (e) {
+      emit(CartError(message: 'Failed to update quantity.'));
     }
   }
 
   // Delete Item
-  void deleteItem(DocumentSnapshot doc) async {
+  Future<void> deleteItem(CartItem item) async {
     try {
-      await _firestore.collection('cart').doc(doc.id).delete();
-
-      if (state is CartLoaded) {
-        final currentState = state as CartLoaded;
-        final updatedCartItems =
-            List<DocumentSnapshot>.from(currentState.cartItems);
-
-        updatedCartItems.removeWhere((item) => item.id == doc.id);
-
-        double newTotalAmount = 0;
-        for (var item in updatedCartItems) {
-          newTotalAmount += item['proprice'] * item['quantity'];
-        }
-
-        emit(CartLoaded(
-            cartItems: updatedCartItems, totalAmount: newTotalAmount));
-      }
+      await _repo.removeFromCart(item);
+      await loadCartItems(silent: true);
     } catch (e) {
-      emit(CartError(message: 'Failed to delete item: ${e.toString()}'));
+      emit(CartError(message: 'Failed to remove the item.'));
     }
   }
 
   // Handle Checkout
-  Future<void> handleCheckout() async {
-    final user = _auth.currentUser;
-    if (user != null) {
-      try {
-        final cartSnapshot = await _firestore
-            .collection('cart')
-            .where('userid', isEqualTo: user.uid)
-            .get();
-
-        if (cartSnapshot.docs.isNotEmpty) {
-          List<Map<String, dynamic>> orderItems = cartSnapshot.docs.map((doc) {
-            return {
-              'proname': doc['proname'],
-              'proprice': doc['proprice'],
-              'quantity': doc['quantity'],
-              'proimage': doc['proimage'],
-              'procolor': doc['procolor'],
-              'prosize': doc['prosize'],
-            };
-          }).toList();
-
-          double totalAmount = 0;
-          cartSnapshot.docs.forEach((doc) {
-            totalAmount += doc['proprice'] * doc['quantity'];
-          });
-
-          await _firestore.collection('orders').add({
-            'userid': user.uid,
-            'orderItems': orderItems,
-            'totalAmount': totalAmount,
-            'orderDate': Timestamp.now(),
-            'status': 'Processing',
-          });
-
-          for (var doc in cartSnapshot.docs) {
-            await _firestore.collection('cart').doc(doc.id).delete();
-          }
-
-          emit(CheckoutSuccess());
-        } else {
-          emit(CartEmpty());
-        }
-      } catch (e) {
-        emit(CheckoutFailure(errorMessage: 'Checkout failed: ${e.toString()}'));
-      }
-    } else {
-      emit(CheckoutFailure(errorMessage: 'You must be logged in to checkout.'));
+  Future<void> handleCheckout({
+    required Address address,
+    required DeliveryOption delivery,
+    required String paymentLabel,
+  }) async {
+    final current = state;
+    if (current is! CartLoaded || current is CheckoutInProgress) return;
+    emit(CheckoutInProgress(
+        cartItems: current.cartItems, totalAmount: current.totalAmount));
+    try {
+      final order = await _repo.placeOrder(
+          address: address, delivery: delivery, paymentLabel: paymentLabel);
+      emit(CheckoutSuccess(order));
+      emit(CartEmpty());
+    } catch (e) {
+      emit(CheckoutFailure(errorMessage: 'Checkout failed. Please try again.'));
+      emit(CartLoaded(
+          cartItems: current.cartItems, totalAmount: current.totalAmount));
     }
   }
 }

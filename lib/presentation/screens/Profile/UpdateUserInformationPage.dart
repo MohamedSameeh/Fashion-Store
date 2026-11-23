@@ -1,197 +1,143 @@
-import 'package:awesome_dialog/awesome_dialog.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/material.dart';
+import 'dart:async';
+
 import 'package:email_validator/email_validator.dart';
-import '../register/forgotPassword.dart';
+import 'package:flutter/material.dart';
+
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/widgets/app_widgets.dart';
+import '../../../data/models.dart';
+import '../../../data/store_repository.dart';
 
 class UpdateUserInformationPage extends StatefulWidget {
   const UpdateUserInformationPage({super.key});
 
   @override
-  _UpdateUserInformationPageState createState() =>
+  State<UpdateUserInformationPage> createState() =>
       _UpdateUserInformationPageState();
 }
 
-class _UpdateUserInformationPageState extends State<UpdateUserInformationPage> {
+class _UpdateUserInformationPageState
+    extends State<UpdateUserInformationPage> {
   final _formKey = GlobalKey<FormState>();
-  TextEditingController fullNameController = TextEditingController();
-  TextEditingController emailController = TextEditingController();
-  TextEditingController phoneController = TextEditingController();
+  final nameController = TextEditingController();
+  final emailController = TextEditingController();
+  final phoneController = TextEditingController();
+  bool _loading = true;
+  bool _saving = false;
+  bool _error = false;
 
-  Future<Map<String, dynamic>?> _fetchUserData() async {
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    setState(() {
+      _loading = true;
+      _error = false;
+    });
     try {
-      final firebaseUser = FirebaseAuth.instance.currentUser;
-      DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(firebaseUser?.uid)
-          .get();
+      final UserProfile? user = await Repo.store
+          .watchProfile()
+          .first
+          .timeout(const Duration(seconds: 12));
+      nameController.text = user?.name ?? '';
+      emailController.text = user?.email ?? '';
+      phoneController.text = user?.phone ?? '';
+    } catch (_) {
+      _error = true;
+    }
+    if (mounted) setState(() => _loading = false);
+  }
 
-      if (doc.exists) {
-        Map<String, dynamic>? data = doc.data() as Map<String, dynamic>?;
-        if (data != null) {
-          fullNameController.text = data['user_name'];
-          emailController.text = data['email'];
-          phoneController.text = data['phone_number'];
-        } else {
-          print('Document data is null');
-        }
-      } else {
-        print('Document does not exist');
+  Future<void> _updateUserInformation() async {
+    if (!_formKey.currentState!.validate()) return;
+    setState(() => _saving = true);
+    try {
+      await Repo.store.updateProfile(
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        phone: phoneController.text.trim(),
+      );
+      if (!mounted) return;
+      showAppSnack(context, 'Profile updated');
+      Navigator.pop(context);
+    } catch (_) {
+      if (mounted) {
+        showAppSnack(context, 'Could not update your profile. Try again.');
       }
-    } catch (e) {
-      print("error.............$e");
-    }
-    return null;
-  }
-
-  Future<void> updateUserProfileByUid() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-    try {
-      final currentUser = FirebaseAuth.instance.currentUser;
-      await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser?.uid)
-          .update({
-        'user_name': fullNameController.text,
-        'email': emailController.text,
-        'phone_number': phoneController.text,
-      });
-
-      //update the email if updated
-      User? user = FirebaseAuth.instance.currentUser;
-      await user?.updateEmail(emailController.text);
-
-
-      // Show success message
-      AwesomeDialog(
-        context: context,
-        dialogType: DialogType.success,
-        animType: AnimType.rightSlide,
-        title: "Success",
-        desc: "Updated Successfully",
-        btnCancelOnPress: () {},
-        btnOkOnPress: () {
-          Navigator.pushNamed(context, 'homepage');
-        },
-      ).show();
-    } catch (e) {
-      print('Error updating user profile: $e');
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
-  String? validateName(String value) {
-    if (value.isEmpty) {
-      return 'Name is required';
-    }
-    if (value.length < 3) {
-      return 'Name must be at least 3 characters long';
-    }
-    return null;
-  }
-
-  String? validateEmail(String value) {
-    if (value.isEmpty) {
-      return 'Email is required';
-    }
-    if (!EmailValidator.validate(value)) {
-      return 'Please enter a valid email address';
-    }
-    return null;
-  }
-
-  String? validatePhoneNumber(String value) {
-    if (value.isEmpty) {
-      return 'Phone number is required';
-    }
-    if (value.length != 11 || !RegExp(r'^[0-9]+$').hasMatch(value)) {
-      return 'Please enter a valid 11-digit phone number';
-    }
-    return null;
+  @override
+  void dispose() {
+    nameController.dispose();
+    emailController.dispose();
+    phoneController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Update My Info'),
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
-        ),
-      ),
-      body: FutureBuilder(
-        future: _fetchUserData(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Reloading data...'),
-                ],
-              ),
-            );
-          } else if (snapshot.hasError) {
-            return Center(child: Text('Error loading user data'));
-          } else {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 20),
-                    TextFormField(
-                      controller: fullNameController,
-                      decoration: InputDecoration(labelText: 'Full Name'),
-                      validator: (value) => validateName(value!),
-                    ),
-                    SizedBox(height: 20),
-                    TextFormField(
-                      controller: emailController,
-                      decoration: InputDecoration(labelText: 'Email'),
-                      validator: (value) => validateEmail(value!),
-                    ),
-                    SizedBox(height: 20),
-                    TextFormField(
-                      controller: phoneController,
-                      decoration: InputDecoration(labelText: 'Phone Number'),
-                      keyboardType: TextInputType.phone,
-                      validator: (value) => validatePhoneNumber(value!),
-                    ),
-                    SizedBox(height: 30),
-                    Container(
-                      width: 400,
-                      margin: EdgeInsets.only(left: 10, right: 10, top: 30),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(50),
-                        color: Colors.red,
-                      ),
-                      child: MaterialButton(
-                        onPressed: () async {
-                          updateUserProfileByUid();
-                        },
-                        child: Text(
-                          'Update',
-                          style: TextStyle(fontSize: 22, color: Colors.white),
+      appBar: AppBar(title: const Text('Update My Info')),
+      body: _error
+          ? ErrorState(
+              message: 'Error loading user data', onRetry: _fetchUserData)
+          : _loading
+              ? const ListSkeleton(count: 3, height: 58)
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(AppSpace.xl),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      children: [
+                        TextFormField(
+                          controller: nameController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: const InputDecoration(
+                            labelText: 'Full Name',
+                            prefixIcon: Icon(Icons.person_outline_rounded),
+                          ),
+                          validator: (v) => (v ?? '').trim().length < 2
+                              ? 'Enter your name'
+                              : null,
                         ),
-                      ),
+                        const SizedBox(height: AppSpace.lg),
+                        TextFormField(
+                          controller: emailController,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: Icon(Icons.mail_outline_rounded),
+                          ),
+                          validator: (v) =>
+                              EmailValidator.validate((v ?? '').trim())
+                                  ? null
+                                  : 'Enter a valid email',
+                        ),
+                        const SizedBox(height: AppSpace.lg),
+                        TextFormField(
+                          controller: phoneController,
+                          keyboardType: TextInputType.phone,
+                          decoration: const InputDecoration(
+                            labelText: 'Phone Number',
+                            prefixIcon: Icon(Icons.phone_outlined),
+                          ),
+                        ),
+                        const SizedBox(height: AppSpace.xxl),
+                        LoadingButton(
+                          label: 'Save changes',
+                          loading: _saving,
+                          onPressed: _updateUserInformation,
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            );
-          }
-        },
-      ),
     );
   }
 }

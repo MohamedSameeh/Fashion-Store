@@ -1,7 +1,11 @@
-import 'package:depi_final_project/presentation/screens/Shop/kids_screen.dart';
-import 'package:depi_final_project/presentation/screens/Shop/mens_screen.dart';
-import 'package:depi_final_project/presentation/screens/Shop/womens_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import '../../../core/theme/app_tokens.dart';
+import '../../../core/widgets/app_widgets.dart';
+import '../../../cubits/catalog/catalog_cubit.dart';
+import '../Search/product_filter.dart';
+import '../Search/search_screen.dart';
 
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
@@ -12,9 +16,8 @@ class ShopScreen extends StatefulWidget {
 
 class _ShopScreenState extends State<ShopScreen>
     with SingleTickerProviderStateMixin {
-  List<Widget> Screens = [WomensScreen(), MensScreen(), KidsScreen()];
   TabController? tabController;
-  List items = ['New', 'Clothes', 'Shoes', 'Accesories'];
+  List items = ['New', 'Clothes', 'Shoes', 'Accessories'];
   List womenNavigators = [
     'new_women',
     'clothes_women',
@@ -34,8 +37,8 @@ class _ShopScreenState extends State<ShopScreen>
     'accesories_kids'
   ];
   List womenImages = [
+    'assets/images/12.jpg',
     'assets/images/11.jpg',
-    'assets/images/13.jpg',
     'assets/images/shoes_women.jpg',
     'assets/images/accessories_women.jpg',
   ];
@@ -51,217 +54,208 @@ class _ShopScreenState extends State<ShopScreen>
     'assets/images/kids_shoes.jpg',
     'assets/images/kids_accesories.jpg',
   ];
+
   @override
   void initState() {
     super.initState();
-    tabController = TabController(length: Screens.length, vsync: this);
+    tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    tabController?.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false,
-          title: Center(
-              child: Text(
-            'Categories',
-            style: TextStyle(
-                fontSize: 28, color: Colors.black, fontWeight: FontWeight.bold),
-          )),
-          bottom: TabBar(
-              indicatorColor: Colors.red,
-              indicatorSize: TabBarIndicatorSize.tab,
-              indicatorWeight: 3,
-              controller: tabController,
-              tabs: [
-                Tab(
-                    child: Text(
-                  'Women',
-                  style: TextStyle(color: Colors.black, fontSize: 15),
-                )),
-                Tab(
-                    child: Text(
-                  'Men',
-                  style: TextStyle(color: Colors.black, fontSize: 15),
-                )),
-                Tab(
-                    child: Text(
-                  'Kids',
-                  style: TextStyle(color: Colors.black, fontSize: 15),
-                )),
-              ]),
-        ),
-        body: TabBarView(
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Categories'),
+        actions: [
+          IconButton(
+            tooltip: 'Search',
+            onPressed: () => Navigator.of(context).pushNamed('search'),
+            icon: const Icon(Icons.search_rounded),
+          ),
+        ],
+        bottom: TabBar(
           controller: tabController,
-          children: [
-            CustomWidget(
-              images: womenImages,
-              items: items,
-              navigators: womenNavigators,
-            ),
-            CustomWidget(
-              images: menImages,
-              items: items,
-              navigators: mensNavigators,
-            ),
-            CustomWidget(
-              images: kidsImages,
-              items: items,
-              navigators: kidsNavigators,
-            ),
-          ],
+          indicatorSize: TabBarIndicatorSize.tab,
+          indicatorWeight: 3,
+          tabs: const [Tab(text: 'Women'), Tab(text: 'Men'), Tab(text: 'Kids')],
         ),
+      ),
+      body: TabBarView(
+        controller: tabController,
+        children: [
+          CustomWidget(
+            category: 'woman',
+            images: womenImages,
+            items: items,
+            navigators: womenNavigators,
+          ),
+          CustomWidget(
+            category: 'men',
+            images: menImages,
+            items: items,
+            navigators: mensNavigators,
+          ),
+          CustomWidget(
+            category: 'kids',
+            images: kidsImages,
+            items: items,
+            navigators: kidsNavigators,
+          ),
+        ],
       ),
     );
   }
 }
 
+/// One tab of the shop: sale banner + the four sub category cards.
 class CustomWidget extends StatelessWidget {
-  CustomWidget(
+  final String category;
+  final List images;
+  final List items;
+  final List navigators;
+
+  const CustomWidget(
       {super.key,
+      required this.category,
       required this.images,
       required this.items,
       required this.navigators});
-  final List images, items, navigators;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        Container(
-          margin: EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            color: Colors.red,
-          ),
-          width: 100,
-          height: 110,
-          child: Center(
-              child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 20),
-                child: Text(
-                  'Summer Sales',
-                  style: TextStyle(
-                      fontSize: 30,
-                      fontWeight: FontWeight.w900,
-                      color: Colors.white),
+    return BlocBuilder<CatalogCubit, CatalogState>(
+      builder: (context, state) {
+        final products = state is CatalogLoaded
+            ? state.products.where((p) => p.category == category).toList()
+            : null;
+        final saleCount = products?.where((p) => p.onSale).length ?? 0;
+        final maxOff = products == null || saleCount == 0
+            ? 0
+            : products.map((p) => p.discount).reduce((a, b) => a > b ? a : b);
+
+        return ListView(
+          padding: const EdgeInsets.all(AppSpace.lg),
+          children: [
+            Semantics(
+              button: true,
+              label: 'Shop the sale',
+              child: InkWell(
+                borderRadius: BorderRadius.circular(AppRadius.lg),
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => SearchScreen(
+                    initial: ProductFilter(
+                        categories: {category},
+                        onSaleOnly: true,
+                        sort: ProductSort.discount),
+                  ),
+                )),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppSpace.xl, vertical: AppSpace.xl),
+                  decoration: BoxDecoration(
+                    color: AppColors.brand,
+                    borderRadius: BorderRadius.circular(AppRadius.lg),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text('MID-SEASON SALE',
+                                style: context.text.headlineSmall!
+                                    .copyWith(color: Colors.white)),
+                            const SizedBox(height: 4),
+                            Text(
+                              maxOff > 0
+                                  ? 'Up to $maxOff% off, $saleCount styles'
+                                  : 'New markdowns every week',
+                              style: context.text.bodyMedium!
+                                  .copyWith(color: Colors.white),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_rounded,
+                          color: Colors.white),
+                    ],
+                  ),
                 ),
               ),
-              Text(
-                'Up to 50% off',
-                style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.normal,
-                    color: Colors.white),
+            ),
+            for (var index = 0; index < items.length; index++) ...[
+              const SizedBox(height: AppSpace.md),
+              _CategoryCard(
+                title: '${items[index]}',
+                image: '${images[index]}',
+                count: products
+                    ?.where((p) => p.subcateg == items[index])
+                    .length,
+                onTap: () =>
+                    Navigator.of(context).pushNamed('${navigators[index]}'),
               ),
             ],
-          )),
-        ),
-        Container(
-          width: double.infinity,
-          height: 505,
-          child: ListView.builder(
-              shrinkWrap: false,
-              itemCount: 4,
-              itemBuilder: (context, index) {
-                return GestureDetector(
-                  onTap: () {
-                    switch (index) {
-                      case 0:
-                        Navigator.of(context).pushNamed('${navigators[index]}');
-                        break;
-                      case 1:
-                        Navigator.of(context).pushNamed('${navigators[index]}');
-                        break;
-                      case 2:
-                        Navigator.of(context).pushNamed('${navigators[index]}');
-                        break;
-                      case 3:
-                        Navigator.of(context).pushNamed('${navigators[index]}');
-                        break;
-                    }
-                  },
-                  child: Container(
-                    height: 100,
-                    margin: EdgeInsets.symmetric(vertical: 8, horizontal: 10),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Row(
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.all(15),
-                          child: Text(
-                            '${items[index]}',
-                            style: TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20),
-                          ),
-                        ),
-                        Spacer(),
-                        Container(
-                          width: 100,
-                          height: 100,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.only(
-                                topRight: Radius.circular(10),
-                                bottomRight: Radius.circular(10)),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.only(
-                                topRight: Radius.circular(10),
-                                bottomRight: Radius.circular(10)),
-                            child: Image.asset(
-                              '${images[index]}',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }),
-        )
-      ],
+          ],
+        );
+      },
     );
   }
 }
 
-class SearchDelegator extends SearchDelegate {
-  @override
-  List<Widget>? buildActions(BuildContext context) {
-    return [
-      IconButton(
-          onPressed: () {
-            query = '';
-          },
-          icon: Icon(Icons.close))
-    ];
-  }
+class _CategoryCard extends StatelessWidget {
+  const _CategoryCard(
+      {required this.title,
+      required this.image,
+      required this.count,
+      required this.onTap});
+  final String title;
+  final String image;
+  final int? count;
+  final VoidCallback onTap;
 
   @override
-  Widget? buildLeading(BuildContext context) {
-    return IconButton(
-        onPressed: () {
-          close(context, null);
-        },
-        icon: Icon(Icons.arrow_back));
-  }
-
-  @override
-  Widget buildResults(BuildContext context) {
-    return Text('');
-  }
-
-  @override
-  Widget buildSuggestions(BuildContext context) {
-    return Text('');
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: title,
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        onTap: onTap,
+        child: SizedBox(
+          height: 112,
+          child: Row(
+            children: [
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: AppSpace.xl),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ExcludeSemantics(
+                          child:
+                              Text(title, style: context.text.titleLarge)),
+                      const SizedBox(height: 4),
+                      count == null
+                          ? const Skeleton(width: 60, height: 12)
+                          : Text('$count ${count == 1 ? 'item' : 'items'}',
+                              style: context.text.bodySmall),
+                    ],
+                  ),
+                ),
+              ),
+              SizedBox(width: 150, height: 112, child: ProductImage(image)),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
