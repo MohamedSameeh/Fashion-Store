@@ -6,7 +6,7 @@ import '../models.dart';
 /// Demo catalogue for `--dart-define=DEMO=true`.
 ///
 /// Photos are the ones shipped in `assets/images/`; products without a photo
-/// use an `art:<icon>:<hex>` tile that is drawn in Flutter.
+/// use an `art:<label>:<hex>` tile that is drawn in Flutter.
 class DemoData {
   DemoData._();
 
@@ -82,7 +82,7 @@ class DemoData {
     _p('w01', 'Crimson Tailored Suit', 'woman', 'Clothes', 189, _img('11.jpg'),
         _clothes, ['Red', 'Black'],
         'A relaxed two-piece suit in a fluid crepe. Wide-leg trousers with a high waist and a soft-shouldered blazer that works together or apart.',
-        discount: 20, daysOld: 40),
+        discount: 30, daysOld: 40),
     _p('w02', 'Sand Linen Blazer Set', 'woman', 'New', 164, _img('12.jpg'),
         _clothes, ['Beige', 'Brown'],
         'Lightweight linen-blend blazer with matching pleated trousers. Breathable, softly structured and made for warm days.',
@@ -112,13 +112,13 @@ class DemoData {
         'Three gold-tone chains of different weights on a single clasp, finished with a coin pendant.',
         daysOld: 20),
     _p('w09', 'Everyday Canvas Tote', 'woman', 'Accessories', 38,
-        'art:bag:C98B6B', _one, ['Beige', 'Black'],
+        'art:Canvas Tote:C98B6B', _one, ['Beige', 'Black'],
         'Sturdy cotton-canvas tote with an inner zip pocket and long handles. Fits a 15-inch laptop.',
         daysOld: 33),
-    _p('w10', 'Leather Ankle Boots', 'woman', 'Shoes', 142, 'art:boot:6B4A3A',
+    _p('w10', 'Leather Ankle Boots', 'woman', 'Shoes', 142, 'art:Ankle Boots:6B4A3A',
         _shoesW, ['Brown', 'Black'],
         'Smooth leather ankle boots with a stacked heel, side zip and cushioned insole.',
-        discount: 30, daysOld: 80),
+        discount: 15, daysOld: 80),
     // --------------------------------------------------------------- Men
     _p('m01', 'Rust Camp-Collar Shirt', 'men', 'New', 64, _img('10.jpg'),
         _clothes, ['Brown', 'Beige'],
@@ -148,15 +148,15 @@ class DemoData {
         _clothes, ['Blue', 'White', 'Green'],
         'Lightweight printed shirt with a relaxed fit and a straight hem. Made to be worn untucked.',
         daysOld: 66),
-    _p('m08', 'Suede Chelsea Boots', 'men', 'Shoes', 148, 'art:boot:8A6A4F',
+    _p('m08', 'Suede Chelsea Boots', 'men', 'Shoes', 148, 'art:Chelsea Boots:8A6A4F',
         _shoesM, ['Brown', 'Black'],
         'Soft suede Chelsea boots with elastic side panels, a pull tab and a flexible rubber sole.',
-        discount: 25, daysOld: 75),
+        discount: 10, daysOld: 75),
     _p('m09', 'Aviator Sunglasses', 'men', 'Accessories', 46,
-        'art:glasses:3E5C76', _one, ['Black', 'Gold'],
+        'art:Aviators:3E5C76', _one, ['Black', 'Gold'],
         'Classic metal-frame aviators with UV400 lenses. Comes with a hard case and cloth.',
         daysOld: 15),
-    _p('m10', 'Slim Stretch Chinos', 'men', 'Clothes', 62, 'art:pants:7A8471',
+    _p('m10', 'Slim Stretch Chinos', 'men', 'Clothes', 62, 'art:Stretch Chinos:7A8471',
         _clothes, ['Khaki', 'Navy', 'Black'],
         'Slim-fit chinos in stretch cotton twill. Sits just below the waist with a tapered leg.',
         daysOld: 28),
@@ -178,18 +178,18 @@ class DemoData {
         'Set of six adjustable rings with hearts, paws and pearls. Nickel free.',
         daysOld: 22),
     _p('k05', 'Rainbow School Backpack', 'kids', 'Accessories', 36,
-        'art:backpack:5B7BD5', _one, ['Blue', 'Pink'],
+        'art:Backpack:5B7BD5', _one, ['Blue', 'Pink'],
         'Padded backpack with two compartments, a bottle pocket and reflective trims.',
         discount: 15, daysOld: 58),
-    _p('k06', 'Dino Graphic Tee', 'kids', 'New', 18, 'art:tee:4FA38A', _kids,
+    _p('k06', 'Dino Graphic Tee', 'kids', 'New', 18, 'art:Graphic Tee:4FA38A', _kids,
         ['Green', 'White'],
         'Organic cotton tee with a hand-drawn dinosaur print and a ribbed neckline.',
         daysOld: 7),
-    _p('k07', 'Canvas Slip-Ons', 'kids', 'Shoes', 28, 'art:shoe:D98C5F',
+    _p('k07', 'Canvas Slip-Ons', 'kids', 'Shoes', 28, 'art:Slip-Ons:D98C5F',
         _kidsShoes, ['Orange', 'Navy'],
         'Easy slip-on canvas shoes with elastic gussets and a flexible rubber sole.',
         discount: 10, daysOld: 41),
-    _p('k08', 'Denim Dungarees', 'kids', 'Clothes', 39, 'art:pants:4C6A92',
+    _p('k08', 'Denim Dungarees', 'kids', 'Clothes', 39, 'art:Dungarees:4C6A92',
         _kids, ['Blue'],
         'Soft-washed denim dungarees with adjustable straps and a front bib pocket.',
         daysOld: 30),
@@ -335,7 +335,7 @@ class DemoData {
         }
         final OrderStatus status;
         if (daysAgo > 5) {
-          status = rnd.nextInt(100) < 8 ? OrderStatus.cancelled : OrderStatus.delivered;
+          status = rnd.nextInt(100) < 14 ? OrderStatus.cancelled : OrderStatus.delivered;
         } else if (daysAgo > 1) {
           status = rnd.nextInt(100) < 70 ? OrderStatus.shipped : OrderStatus.delivered;
         } else {

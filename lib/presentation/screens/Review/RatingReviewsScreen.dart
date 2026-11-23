@@ -130,7 +130,8 @@ class _RatingAndReviewPageState extends State<RatingAndReviewPage> {
                     Column(
                       children: [
                         Text(avg.toStringAsFixed(1),
-                            style: context.text.displaySmall),
+                            style: context.text.titleLarge!
+                                .copyWith(fontSize: 38, height: 1.1)),
                         RatingStars(avg, size: 16),
                         const SizedBox(height: 4),
                         Text(

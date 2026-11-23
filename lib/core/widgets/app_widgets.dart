@@ -46,21 +46,15 @@ class BrandMark extends StatelessWidget {
 
 // ------------------------------------------------------------ product images
 
-const Map<String, IconData> _artIcons = {
-  'bag': Icons.shopping_bag_outlined,
-  'boot': Icons.hiking_rounded,
-  'glasses': Icons.visibility_outlined,
-  'pants': Icons.accessibility_new_rounded,
-  'backpack': Icons.backpack_outlined,
-  'tee': Icons.checkroom_rounded,
-  'shoe': Icons.ice_skating_outlined,
-};
-
 /// Shows a product image from any supported source:
-/// `assets/...`, `art:<icon>:<hex>` (drawn tile) or an http(s) URL.
+/// `assets/...`, `art:<label>:<hex>` (drawn tile) or an http(s) URL.
 class ProductImage extends StatelessWidget {
-  const ProductImage(this.source, {super.key, this.fit = BoxFit.cover});
+  const ProductImage(this.source,
+      {super.key,
+      this.fit = BoxFit.cover,
+      this.alignment = Alignment.topCenter});
   final String source;
+  final Alignment alignment;
   final BoxFit fit;
 
   @override
@@ -68,7 +62,7 @@ class ProductImage extends StatelessWidget {
     if (source.startsWith('art:')) {
       final parts = source.split(':');
       return ProductArt(
-        icon: _artIcons[parts[1]] ?? Icons.checkroom_rounded,
+        label: parts[1],
         color: Color(int.parse('FF${parts.length > 2 ? parts[2] : 'B0A090'}',
             radix: 16)),
       );
@@ -79,7 +73,7 @@ class ProductImage extends StatelessWidget {
         fit: fit,
         width: double.infinity,
         height: double.infinity,
-        alignment: Alignment.topCenter,
+        alignment: alignment,
         filterQuality: FilterQuality.medium,
         errorBuilder: (_, __, ___) => const _ImageFallback(),
       );
@@ -108,16 +102,17 @@ class _ImageFallback extends StatelessWidget {
       );
 }
 
-/// A neutral colour-block product tile for catalogue items without a photo.
+/// A typographic colour-block tile for catalogue items without a photo.
 class ProductArt extends StatelessWidget {
-  const ProductArt({super.key, required this.icon, required this.color});
-  final IconData icon;
+  const ProductArt({super.key, required this.label, required this.color});
+  final String label;
   final Color color;
 
   @override
   Widget build(BuildContext context) {
-    final light = Color.lerp(color, Colors.white, 0.55)!;
-    final deep = Color.lerp(color, Colors.black, 0.12)!;
+    final light = Color.lerp(color, Colors.white, 0.45)!;
+    final deep = Color.lerp(color, Colors.black, 0.18)!;
+    final serif = Theme.of(context).textTheme.headlineMedium!;
     return LayoutBuilder(builder: (context, c) {
       final s = c.biggest.shortestSide;
       return DecoratedBox(
@@ -134,24 +129,56 @@ class ProductArt extends StatelessWidget {
             Positioned(
               right: -s * 0.25,
               top: -s * 0.2,
-              child: _Blob(size: s * 0.9, opacity: 0.16),
+              child: _Blob(size: s * 0.9, opacity: 0.14),
             ),
             Positioned(
               left: -s * 0.3,
               bottom: -s * 0.35,
-              child: _Blob(size: s * 0.95, opacity: 0.10),
+              child: _Blob(size: s * 0.95, opacity: 0.09),
             ),
-            Center(
-              child: Container(
-                width: s * 0.5,
-                height: s * 0.5,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.22),
-                  shape: BoxShape.circle,
+            if (s > 70)
+              Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: s * 0.1),
+                  child: ExcludeSemantics(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            label.replaceFirst(' ', '\n'),
+                            textAlign: TextAlign.center,
+                            style: serif.copyWith(
+                              color: Colors.white,
+                              fontSize: s * 0.17,
+                              height: 1.05,
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: s * 0.05),
+                        Container(
+                            width: s * 0.16, height: 1.5, color: Colors.white70),
+                        SizedBox(height: s * 0.045),
+                        Text(
+                          'FASHIONSHOP',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.85),
+                            fontSize: (s * 0.048).clamp(6.0, 14.0),
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: s * 0.016,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-                child: Icon(icon, size: s * 0.28, color: Colors.white),
+              )
+            else
+              Center(
+                child: Icon(Icons.checkroom_rounded,
+                    size: s * 0.5, color: Colors.white),
               ),
-            ),
           ],
         ),
       );

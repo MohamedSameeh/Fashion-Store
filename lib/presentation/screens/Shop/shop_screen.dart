@@ -251,7 +251,7 @@ class _CategoryCard extends StatelessWidget {
                   ),
                 ),
               ),
-              SizedBox(width: 150, height: 112, child: ProductImage(image)),
+              SizedBox(width: 150, height: 112, child: ProductImage(image, alignment: const Alignment(0, 0.1))),
             ],
           ),
         ),

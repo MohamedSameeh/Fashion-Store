@@ -196,7 +196,7 @@ class _SearchScreenState extends State<SearchScreen> {
             onPressed: () => _openFilters(all),
           ),
           const SizedBox(width: AppSpace.sm),
-          FilterChip(
+          ChoiceChip(
             label: const Text('On sale'),
             selected: _filter.onSaleOnly,
             onSelected: (v) =>
@@ -204,7 +204,7 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           for (final e in _categoryLabels.entries) ...[
             const SizedBox(width: AppSpace.sm),
-            FilterChip(
+            ChoiceChip(
               label: Text(e.value),
               selected: _filter.categories.contains(e.key),
               onSelected: (_) => _toggleCategory(e.key),
@@ -248,7 +248,7 @@ class _FilterSheetState extends State<FilterSheet> {
         runSpacing: AppSpace.sm,
         children: [
           for (final e in options.entries)
-            FilterChip(
+            ChoiceChip(
               label: Text(e.value),
               selected: selected.contains(e.key),
               onSelected: (_) => onTap(e.key),

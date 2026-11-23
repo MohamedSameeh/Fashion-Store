@@ -37,6 +37,8 @@ import 'package:depi_final_project/presentation/screens/splashscreen/splashscree
 import 'package:depi_final_project/presentation/view_all_pages/new_view_all_page.dart';
 import 'package:depi_final_project/presentation/view_all_pages/sales_view_all_page.dart';
 import 'package:depi_final_project/presentation/widgets/productdetails.dart';
+import 'dart:ui' show PointerDeviceKind;
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -93,6 +95,7 @@ class MyApp extends StatelessWidget {
                 builder: (context, mode, _) {
                   return MaterialApp(
                       title: 'Fashionshop',
+                      scrollBehavior: const AppScrollBehavior(),
                       debugShowCheckedModeBanner: false,
                       theme: AppTheme.light,
                       darkTheme: AppTheme.dark,
@@ -146,4 +149,12 @@ class MyApp extends StatelessWidget {
           }),
     );
   }
+}
+
+/// Lets lists and carousels be dragged with a mouse too (web / desktop).
+class AppScrollBehavior extends MaterialScrollBehavior {
+  const AppScrollBehavior();
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => PointerDeviceKind.values.toSet();
 }

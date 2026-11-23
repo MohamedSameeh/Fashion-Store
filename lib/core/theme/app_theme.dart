@@ -237,6 +237,20 @@ class AppTheme {
         thumbColor: primary,
         overlayColor: primary.withValues(alpha: 0.12),
       ),
+      segmentedButtonTheme: SegmentedButtonThemeData(
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.resolveWith((s) =>
+              s.contains(WidgetState.selected)
+                  ? (isDark ? const Color(0xFFF3F1EE) : AppColors.ink)
+                  : surface),
+          foregroundColor: WidgetStateProperty.resolveWith((s) =>
+              s.contains(WidgetState.selected)
+                  ? (isDark ? AppColors.ink : Colors.white)
+                  : onSurface),
+          side: WidgetStateProperty.all(BorderSide(color: outline)),
+          textStyle: WidgetStateProperty.all(text.labelMedium),
+        ),
+      ),
       progressIndicatorTheme: ProgressIndicatorThemeData(color: primary),
       tabBarTheme: TabBarThemeData(
         labelColor: onSurface,

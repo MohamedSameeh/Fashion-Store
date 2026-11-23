@@ -188,7 +188,9 @@ class _OwnerDashboardPageState extends State<OwnerDashboardPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text('$total', style: context.text.headlineSmall),
+                        Text('$total',
+                            style: context.text.titleLarge!
+                                .copyWith(fontSize: 22)),
                         Text('orders', style: context.text.bodySmall),
                       ],
                     ),
@@ -560,7 +562,7 @@ class _BarPainter extends CustomPainter {
       canvas.drawRRect(
           rect, Paint()..color = i == selected ? barSelected : bar);
       if ((data.length - 1 - i) % every == 0) {
-        _text(canvas, '${data[i].day.day}/${data[i].day.month}',
+        _text(canvas, '${data[i].day.month}/${data[i].day.day}',
             Offset(cx, size.height - _bottom + 6),
             center: true);
       }

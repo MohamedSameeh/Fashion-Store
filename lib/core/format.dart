@@ -1,6 +1,8 @@
 import 'package:intl/intl.dart';
 
-String money(num v) => '\$${v.toStringAsFixed(2)}';
+final _money = NumberFormat('#,##0.00', 'en_US');
+
+String money(num v) => '\$${_money.format(v)}';
 
 String moneyCompact(num v) => v >= 1000
     ? '\$${(v / 1000).toStringAsFixed(1)}k'

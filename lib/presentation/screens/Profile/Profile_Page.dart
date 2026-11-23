@@ -201,7 +201,8 @@ class _ProfilePageState extends State<ProfilePage> {
               padding: const EdgeInsets.symmetric(vertical: AppSpace.md),
               child: Column(
                 children: [
-                  Text(value, style: context.text.headlineSmall),
+                  Text(value,
+                      style: context.text.titleLarge!.copyWith(fontSize: 22)),
                   Text(label, style: context.text.bodySmall),
                 ],
               ),
