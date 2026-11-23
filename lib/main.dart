@@ -39,9 +39,11 @@ bool loginOrNot = true;
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  if (!const bool.fromEnvironment('DEMO')) {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+  }
   //to handle on boarding screens
   SharedPreferences prefs = await SharedPreferences.getInstance();
   isFirstTime = prefs.getBool('isFirstTime') ?? true; //default is true
@@ -63,9 +65,11 @@ class MyApp extends StatelessWidget {
         builder: (_, child) {
           return MaterialApp(
               debugShowCheckedModeBanner: false,
-              initialRoute: isFirstTime == true
-                  ? 'splashScreen'
-                  : (loginOrNot == true ? 'homepage' : 'signIn'),
+              initialRoute: const bool.fromEnvironment('DEMO')
+                  ? 'signIn'
+                  : isFirstTime == true
+                      ? 'splashScreen'
+                      : (loginOrNot == true ? 'homepage' : 'signIn'),
               routes: {
                 'splashScreen': (context) => SplashScreen(),
                 'signIn': (context) => SigninScreen(),

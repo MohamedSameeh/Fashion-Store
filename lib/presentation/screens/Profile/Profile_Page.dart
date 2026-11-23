@@ -1,4 +1,3 @@
-import 'package:depi_final_project/add_product.dart';
 import 'package:depi_final_project/presentation/screens/Profile/utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
