@@ -63,6 +63,7 @@ class _ProductDetailsPageState extends State<ProductDetailsPage> {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
         duration: const Duration(seconds: 3),
+        persist: false,
         content: Text(ok
             ? '${product.name} added to your bag'
             : 'Could not add to bag. Please try again.'),
